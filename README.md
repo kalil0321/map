@@ -1,10 +1,10 @@
-# Stapply Job Map
+#  Job Map
 
 A dark-mode interactive map for exploring AI job opportunities from top companies worldwide. Built with **Next.js**, **React**, **TypeScript**, and **Mapbox GL**.
 
-**Stapply Job Map** helps you discover AI jobs from leading companies like OpenAI, Anthropic, Mistral AI, DeepMind, Cohere, Hugging Face, and more. Filter by location, company, and job title with the built-in AI assistant.
+It helps you discover AI jobs from leading companies like OpenAI, Anthropic, Mistral AI, DeepMind, Cohere, Hugging Face, and more. Filter by location, company, and job title with the built-in AI assistant.
 
-<blockquote class="twitter-tweet" data-media-max-width="560"><p lang="en" dir="ltr">Find your next top job at leading AI companies super fast using Stapply Map. <a href="https://t.co/CUjHVa7xcT">pic.twitter.com/CUjHVa7xcT</a></p>&mdash; Kalil (@kalil0321) <a href="https://twitter.com/kalil0321/status/1992360484780253555?ref_src=twsrc%5Etfw">November 22, 2025</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+[View demo](https://twitter.com/kalil0321/status/1992360484780253555)
 
 ## Setup
 
