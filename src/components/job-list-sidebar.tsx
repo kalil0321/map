@@ -44,7 +44,8 @@ const JobItem = memo(function JobItem({
     <div
       className={clsx(
         'p-4 transition-all duration-150',
-        'hover:bg-white/5 cursor-pointer'
+        'hover:bg-white/5 cursor-pointer',
+        'w-full overflow-hidden'
       )}
       onClick={handleClick}
     >
@@ -55,12 +56,12 @@ const JobItem = memo(function JobItem({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-[10px] lg:text-[11px] xl:text-[12px] font-medium text-white/50 uppercase tracking-wider no-underline hover:text-blue-400 transition-colors"
+          className="text-[10px] lg:text-[11px] xl:text-[12px] font-medium text-white/50 uppercase tracking-wider no-underline hover:text-blue-400 transition-colors truncate max-w-full"
         >
           {job.company}
         </Link>
         {formatSalary(job) && (
-          <span className="text-[10px] lg:text-[11px] xl:text-[12px] text-green-400/80 font-medium">
+          <span className="text-[10px] lg:text-[11px] xl:text-[12px] text-green-400/80 font-medium shrink-0">
             {formatSalary(job)}
           </span>
         )}
@@ -68,17 +69,17 @@ const JobItem = memo(function JobItem({
 
       {/* Title */}
       <Link
-        href={`/jobs/${generateJobSlug(job.title, job.id, job.company)}`}
+        href={`/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
-        className="text-[13px] lg:text-[14px] xl:text-[15px] font-medium text-white mb-1 leading-normal m-0 no-underline hover:text-blue-400 transition-colors block"
+        className="text-[13px] lg:text-[14px] xl:text-[15px] font-medium text-white mb-1 leading-normal m-0 no-underline hover:text-blue-400 transition-colors block line-clamp-2 wrap-break-word"
       >
         {job.title}
       </Link>
 
       {/* Location */}
-      <div className="flex items-center gap-1.5 text-[12px] lg:text-[13px] xl:text-[14px] text-white/60 mb-3">
+      <div className="flex items-center gap-1.5 text-[12px] lg:text-[13px] xl:text-[14px] text-white/60 mb-3 min-w-0">
         <svg
           width="12"
           height="12"
@@ -88,11 +89,12 @@ const JobItem = memo(function JobItem({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="shrink-0"
         >
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        {job.location}
+        <span className="truncate">{job.location}</span>
       </div>
 
       {/* View Job Button */}
@@ -224,12 +226,13 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
     return locations.size;
   }, [processedJobs]);
 
-  // Virtual scrolling setup
+  // Virtual scrolling setup with dynamic sizing
   const virtualizer = useVirtualizer({
     count: processedJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 160, // Estimated height of each job item
+    estimateSize: () => 144, // Initial estimate, will be measured dynamically
     overscan: 5, // Render 5 extra items outside viewport
+    measureElement: (element) => element?.getBoundingClientRect().height ?? 144,
   });
 
   // Close on Escape key
@@ -357,23 +360,25 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
           className="flex-1 overflow-y-auto custom-scrollbar bg-black"
         >
           {processedJobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/40 px-6 text-center">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mb-3 opacity-50"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <p className="text-[13px] lg:text-[14px] xl:text-[15px] text-white/60 m-0">No jobs found</p>
-              <p className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/40 mt-2 m-0">Try adjusting your search or filters</p>
+            <div className="flex flex-col items-center justify-center h-full px-6 text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-white/40"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+              </div>
+              <p className="text-[13px] lg:text-[14px] xl:text-[15px] text-white/70 font-medium m-0 mb-1">No jobs found</p>
+              <p className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 m-0">Try adjusting your search or filters</p>
             </div>
           ) : (
             <div
@@ -388,12 +393,13 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
                 return (
                   <div
                     key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
                       width: '100%',
-                      height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
                       borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     }}
