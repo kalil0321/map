@@ -27,11 +27,14 @@ export function generateHash(text: string): string {
  * Generate a job URL slug from job data
  * Format: {company-slug}/{value}
  * where value is {title-slug}-{hash}
+ * Uses ats_id or url for hash if id is empty
  */
-export function generateJobSlug(title: string, id: string, company: string): string {
+export function generateJobSlug(title: string, id: string, company: string, atsId?: string, url?: string): string {
   const companySlug = slugify(company);
   const titleSlug = slugify(title);
-  const hash = generateHash(id);
+  // Use ats_id or url for hash if id is empty (many CSVs don't have an id column)
+  const hashSource = id || atsId || url || '';
+  const hash = generateHash(hashSource);
   const value = `${titleSlug}-${hash}`;
   return `${companySlug}/${value}`;
 }
@@ -75,4 +78,23 @@ export function parseJobPath(path: string): { company: string; value: string } |
  */
 export function generateCompanySlug(companyName: string): string {
   return slugify(companyName);
+}
+
+/**
+ * Find a job by matching the full slug (company/value)
+ * This is more reliable than extracting the hash because title slugs can contain hyphens
+ */
+export function findJobBySlug<T extends { title: string; id: string; company: string; ats_id?: string; url?: string }>(
+  jobs: T[],
+  companySlug: string,
+  valueSlug: string
+): T | undefined {
+  return jobs.find(job => {
+    const expectedSlug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
+    const expectedParts = expectedSlug.split('/');
+    if (expectedParts.length !== 2) return false;
+    
+    const [expectedCompany, expectedValue] = expectedParts;
+    return expectedCompany === companySlug && expectedValue === valueSlug;
+  });
 }

@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Add job pages to sitemap
     const jobPages: MetadataRoute.Sitemap = jobs.map((job) => {
-      const slug = generateJobSlug(job.title, job.id, job.company);
+      const slug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
       return {
         url: `${baseUrl}/jobs/${slug}`,
         lastModified: new Date(),
