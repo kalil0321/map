@@ -40,8 +40,8 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
         const salaryInfo = formatSalary(job);
         const title = `${job.title} at ${job.company} - ${job.location}${salaryInfo ? ` - ${salaryInfo}` : ''} | Stapply`;
         const description = salaryInfo
-            ? `Apply for ${job.title} at ${job.company} in ${job.location}. ${salaryInfo}. Explore AI and tech jobs on Stapply's interactive job map.`
-            : `Apply for ${job.title} at ${job.company} in ${job.location}. Explore AI and tech jobs on Stapply's interactive job map.`;
+            ? `Apply for ${job.title} at ${job.company} in ${job.location}. ${salaryInfo}. Explore jobs at tech companies on Stapply's interactive job map.`
+            : `Apply for ${job.title} at ${job.company} in ${job.location}. Explore jobs at tech companies on Stapply's interactive job map.`;
         const jobUrl = `https://map.stapply.ai/jobs/${companySlug}/${value}`;
         const ogImageUrl = `https://map.stapply.ai/api/og/job?company=${encodeURIComponent(companySlug)}&value=${encodeURIComponent(value)}`;
 

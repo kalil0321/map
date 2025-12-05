@@ -5,8 +5,8 @@ import { generateCompanySlug } from '@/lib/slug-utils';
 import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
-  title: 'AI Jobs Directory | Stapply',
-  description: 'Browse all AI companies and job openings on Stapply.',
+  title: 'Jobs at Tech Companies Worldwide | Stapply',
+  description: 'Browse all tech companies and job openings on Stapply.',
 };
 
 export default async function JobsDirectoryPage() {
@@ -31,7 +31,7 @@ export default async function JobsDirectoryPage() {
 
         <main className="max-w-4xl mx-auto px-5 pb-6 md:pb-8 space-y-10 pt-1">
           <section className="space-y-4">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">AI JOBS DIRECTORY</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">JOBS DIRECTORY</h1>
             <div className="flex flex-wrap items-center gap-3 text-[13px] text-white/60">
               <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
                 {jobs.length.toLocaleString()} open roles

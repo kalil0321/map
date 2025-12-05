@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
         if (matchingJobs.length === 0) {
             return {
                 title: 'Company Jobs | Stapply',
-                description: 'Explore AI jobs on Stapply.',
+                description: 'Explore jobs at tech companies on Stapply.',
             };
         }
 
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     } catch (error) {
         return {
             title: 'Company Jobs | Stapply',
-            description: 'Explore AI jobs on Stapply.',
+            description: 'Explore jobs at tech companies on Stapply.',
         };
     }
 }

@@ -10,7 +10,7 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: `${job.title} position at ${job.company} in ${job.location}. Apply now to join our team. Visit Stapply to discover more AI and tech job opportunities.`,
+    description: `${job.title} position at ${job.company} in ${job.location}. Apply now to join our team. Visit Stapply to discover more jobs at tech companies.`,
     datePosted: new Date().toISOString().split('T')[0], // Today's date as fallback
     hiringOrganization: {
       '@type': 'Organization',
@@ -44,7 +44,7 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
   // Add salary information if available
   const salaryFormatted = formatSalary(job);
   if (salaryFormatted) {
-    schema.description = `${job.title} position at ${job.company} in ${job.location}. ${salaryFormatted}. Apply now to join our team. Visit Stapply to discover more AI and tech job opportunities.`;
+    schema.description = `${job.title} position at ${job.company} in ${job.location}. ${salaryFormatted}. Apply now to join our team. Visit Stapply to discover more jobs at tech companies.`;
   }
 
   // Add baseSalary if we have salary data

@@ -160,7 +160,7 @@ export default function Home() {
   return (
     <>
       {/* Hidden heading for SEO */}
-      <h1 className="sr-only">Stapply Job Map - Explore AI Jobs Worldwide</h1>
+      <h1 className="sr-only">Stapply Job Map - Explore Jobs at Tech Companies Worldwide</h1>
       <Analytics />
       <JobMap
         jobs={jobMarkers}

@@ -1,8 +1,8 @@
 #  Job Map
 
-A dark-mode interactive map for exploring AI job opportunities from top companies worldwide. Built with **Next.js**, **React**, **TypeScript**, and **Mapbox GL**.
+A dark-mode interactive map for exploring job opportunities from tech companies worldwide. Built with **Next.js**, **React**, **TypeScript**, and **Mapbox GL**.
 
-It helps you discover AI jobs from leading companies like OpenAI, Anthropic, Mistral AI, DeepMind, Cohere, Hugging Face, and more. Filter by location, company, and job title with the built-in AI assistant.
+It helps you discover jobs from leading tech companies like OpenAI, Anthropic, Mistral AI, DeepMind, Cohere, Hugging Face, and more. Filter by location, company, and job title with the built-in AI assistant.
 
 [View demo](https://twitter.com/kalil0321/status/1992360484780253555)
 
