@@ -1,36 +1,54 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useQueryState } from 'nuqs';
 import clsx from 'clsx';
-import { generateJobSlug } from '@/lib/slug-utils';
+import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
 import { formatSalary } from '@/utils/salary-format';
 import { useDebounce } from '@/hooks/use-debounce';
 import type { JobMarker } from '@/types';
 
 type Job = JobMarker;
 
-type SortOption = 'location' | 'title';
+type SortOption = 'location' | 'title' | 'company';
 
-interface CompanyJobListProps {
+interface AllJobsListProps {
     jobs: Job[];
 }
 
-export function CompanyJobList({ jobs }: CompanyJobListProps) {
-    const [searchText, setSearchText] = useState('');
-    const debouncedSearchText = useDebounce(searchText, 300);
+export function AllJobsList({ jobs }: AllJobsListProps) {
+    const [urlSearchText, setUrlSearchText] = useQueryState('search', {
+        defaultValue: '',
+        clearOnDefault: true,
+    });
+    const [localSearchText, setLocalSearchText] = useState(urlSearchText || '');
+    const debouncedSearchText = useDebounce(localSearchText, 300);
     const [sortBy, setSortBy] = useState<SortOption>('title');
     const hasJobs = jobs.length > 0;
+
+    // Sync local state with URL on mount or when URL changes externally
+    useEffect(() => {
+        setLocalSearchText(urlSearchText || '');
+    }, [urlSearchText]);
+
+    // Update URL when debounced search text changes
+    useEffect(() => {
+        if (debouncedSearchText !== urlSearchText) {
+            setUrlSearchText(debouncedSearchText || null);
+        }
+    }, [debouncedSearchText, urlSearchText, setUrlSearchText]);
 
     // Filter and sort jobs
     const processedJobs = useMemo(() => {
         let filtered = jobs;
 
         // Apply search filter (use debounced value)
-        if (debouncedSearchText.trim()) {
+        if (debouncedSearchText?.trim()) {
             const searchLower = debouncedSearchText.toLowerCase();
             filtered = filtered.filter(job =>
                 job.title.toLowerCase().includes(searchLower) ||
+                job.company.toLowerCase().includes(searchLower) ||
                 job.location.toLowerCase().includes(searchLower)
             );
         }
@@ -41,11 +59,12 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
             case 'location':
                 sorted.sort((a, b) => a.location.localeCompare(b.location));
                 break;
-            case 'title':
-                sorted.sort((a, b) => a.title.localeCompare(b.title));
+            case 'company':
+                sorted.sort((a, b) => a.company.localeCompare(b.company));
                 break;
+            case 'title':
             default:
-                // Keep original order
+                sorted.sort((a, b) => a.title.localeCompare(b.title));
                 break;
         }
 
@@ -66,9 +85,9 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                 >
                     <input
                         type="text"
-                        placeholder={hasJobs ? 'Search jobs...' : 'No roles yet'}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder={hasJobs ? 'Search jobs by title, company, or location...' : 'No roles yet'}
+                        value={localSearchText}
+                        onChange={(e) => setLocalSearchText(e.target.value)}
                         className={clsx(
                             'w-full px-4 py-2.5',
                             'bg-transparent border-none text-white text-[13px] outline-none',
@@ -84,6 +103,7 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                     <div className="flex gap-1.5 flex-wrap">
                         {[
                             { value: 'title', label: 'Title' },
+                            { value: 'company', label: 'Company' },
                             { value: 'location', label: 'Location' },
                         ].map((option) => (
                             <button
@@ -105,8 +125,21 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                 </div>
             </div>
 
+            {/* Results count */}
+            {debouncedSearchText && (
+                <div className="text-[13px] text-white/60">
+                    {processedJobs.length === 0 ? (
+                        <span>No jobs found matching &quot;{debouncedSearchText}&quot;</span>
+                    ) : (
+                        <span>
+                            {processedJobs.length.toLocaleString()} job{processedJobs.length === 1 ? '' : 's'} found
+                        </span>
+                    )}
+                </div>
+            )}
+
             {/* Job List */}
-            <div className="h-[450px] overflow-y-auto custom-scrollbar">
+            <div className="h-[600px] overflow-y-auto custom-scrollbar">
                 {processedJobs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                         <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
@@ -132,7 +165,6 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                     <div className="divide-y divide-white/5">
                         {processedJobs.map((job, index) => {
                             const slug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
-                            // Create a unique key - use ats_id (which is always present) with index as fallback
                             const uniqueKey = job.ats_id || `${job.company}-${job.title}-${index}`;
                             return (
                                 <div
@@ -146,6 +178,16 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                                     >
                                         {job.title}
                                     </Link>
+
+                                    {/* Company */}
+                                    <div className="text-[13px] md:text-[15px] text-white/70 mb-1.5">
+                                        <Link
+                                            href={`/jobs/${generateCompanySlug(job.company)}`}
+                                            className="no-underline hover:text-white transition-colors"
+                                        >
+                                            {job.company}
+                                        </Link>
+                                    </div>
 
                                     {/* Location and Salary */}
                                     <div className="flex items-center gap-2 text-[13px] md:text-[15px] text-white/60 mb-2 flex-wrap">
@@ -199,6 +241,24 @@ export function CompanyJobList({ jobs }: CompanyJobListProps) {
                     </div>
                 )}
             </div>
+
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+            `}</style>
         </div>
     );
 }
+

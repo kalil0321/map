@@ -2,9 +2,10 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { Buffer } from 'buffer';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
-import { generateHash, slugify } from '@/lib/slug-utils';
+import { findJobBySlug } from '@/lib/slug-utils';
 import { generateOGMapBackground } from '@/utils/og-image';
 import { formatSalary } from '@/utils/salary-format';
+import type { JobMarker } from '@/types';
 
 // Use Node.js runtime for better image processing support in production
 export const runtime = 'nodejs';
@@ -22,18 +23,8 @@ export async function GET(request: NextRequest) {
     // Load jobs and find the matching one
     const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
 
-    // Extract hash from value slug
-    const hashParts = valueSlug.split('-');
-    const hash = hashParts.length > 0 ? hashParts[hashParts.length - 1] : null;
-
-    if (!hash) {
-      return new Response('Invalid job slug', { status: 400 });
-    }
-
-    // Find job matching company slug and hash
-    const job = allJobs.find(j =>
-      slugify(j.company) === companySlug && generateHash(j.id) === hash
-    );
+    // Find job by matching the full slug (more reliable than extracting hash)
+    const job = findJobBySlug<JobMarker>(allJobs, companySlug, valueSlug);
 
     if (!job) {
       return new Response('Job not found', { status: 404 });
