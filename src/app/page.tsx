@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
+import { useQueryState } from 'nuqs';
 import Link from 'next/link';
 import { JobMap } from '@/components/job-map';
 import { LoadingScreen } from '@/components/loading-screen';
@@ -14,8 +15,9 @@ import { MAPBOX_TOKEN } from '@/lib/config';
 import { AIService } from '@/services/ai-service';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
 import { Analytics } from '@vercel/analytics/react';
+import { useDebounce } from '@/hooks/use-debounce';
 
-export default function Home() {
+function HomeContent() {
   const [jobMarkers, setJobMarkers] = useState<JobMarker[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +29,18 @@ export default function Home() {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const aiServiceRef = useRef<AIService>(new AIService());
   const mapControlCallbacksRef = useRef<MapControlCallbacks | null>(null);
+
+  // URL query state for search
+  const [urlSearchText, setUrlSearchText] = useQueryState('search', {
+    defaultValue: '',
+    clearOnDefault: true,
+  });
+
+  // Track applied filters (excluding search which comes from URL)
+  const [appliedFilters, setAppliedFilters] = useState<Pick<FilterState, 'companies' | 'locations'>>({
+    companies: [],
+    locations: [],
+  });
 
   const handleMapControlReady = useCallback((callbacks: MapControlCallbacks) => {
     mapControlCallbacksRef.current = callbacks;
@@ -58,7 +72,7 @@ export default function Home() {
     }
   }, [jobMarkers]);
 
-  const handleApplyFilters = useCallback((filters: FilterState) => {
+  const applyFilters = useCallback((filters: FilterState) => {
     let filtered = jobMarkers;
 
     // Filter by companies
@@ -83,6 +97,30 @@ export default function Home() {
 
     setFilteredJobs(filtered.length < jobMarkers.length ? filtered : null);
   }, [jobMarkers]);
+
+  const handleApplyFilters = useCallback((filters: FilterState) => {
+    setAppliedFilters({
+      companies: filters.companies,
+      locations: filters.locations,
+    });
+
+    // Sync search text to URL if different
+    if (filters.searchText !== urlSearchText) {
+      setUrlSearchText(filters.searchText || null);
+    } else {
+      applyFilters(filters);
+    }
+  }, [applyFilters, urlSearchText, setUrlSearchText]);
+
+  useEffect(() => {
+    if (jobMarkers.length > 0 && urlSearchText !== undefined) {
+      applyFilters({
+        companies: appliedFilters.companies,
+        locations: appliedFilters.locations,
+        searchText: urlSearchText || '',
+      });
+    }
+  }, [urlSearchText, jobMarkers, applyFilters, appliedFilters]);
 
   const toggleJobList = useCallback(() => {
     setIsJobListOpen((prev) => !prev);
@@ -184,6 +222,8 @@ export default function Home() {
         onClose={() => setIsFilterDialogOpen(false)}
         jobs={jobMarkers}
         onApplyFilters={handleApplyFilters}
+        searchText={urlSearchText || ''}
+        onSearchTextChange={setUrlSearchText}
       />
       <JobListSidebar
         jobs={jobMarkers}
@@ -204,5 +244,13 @@ export default function Home() {
         Directory
       </Link>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <HomeContent />
+    </Suspense>
   );
 }

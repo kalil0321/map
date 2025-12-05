@@ -142,19 +142,55 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
 
 function CompanyNotFound() {
     return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-            <div className="text-center max-w-md">
-                <h1 className="text-2xl font-bold mb-4 tracking-[-0.02em]">Company Not Found</h1>
-                <p className="text-white/60 mb-6 text-[13px]">We could not find any roles for this company.</p>
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-[13px] font-medium no-underline"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    Back to Map
-                </Link>
+        <div className="min-h-screen bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
+            <PageHeader />
+            <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-6">
+                <div className="text-center max-w-md space-y-6">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <svg
+                                width="32"
+                                height="32"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-white/40"
+                            >
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                        </div>
+                        <div className="space-y-2">
+                            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">Company Not Found</h1>
+                            <p className="text-white/60 text-[14px] m-0">We could not find any roles for this company.</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <Link
+                            href="/jobs"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                            Browse Jobs
+                        </Link>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                            Back to Map
+                        </Link>
+                    </div>
+                </div>
             </div>
         </div>
     );

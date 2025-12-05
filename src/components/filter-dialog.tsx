@@ -9,6 +9,8 @@ interface FilterDialogProps {
   onClose: () => void;
   jobs: JobMarker[];
   onApplyFilters: (filters: FilterState) => void;
+  searchText: string;
+  onSearchTextChange: (value: string | null) => void;
 }
 
 export interface FilterState {
@@ -17,12 +19,22 @@ export interface FilterState {
   searchText: string;
 }
 
-export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters }: FilterDialogProps) {
+export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText: urlSearchText, onSearchTextChange }: FilterDialogProps) {
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
-  const [searchText, setSearchText] = useState('');
+  const [localSearchText, setLocalSearchText] = useState(urlSearchText);
   const [companySearchText, setCompanySearchText] = useState('');
   const [locationSearchText, setLocationSearchText] = useState('');
+
+  // Sync local state with URL when dialog opens or when URL changes externally
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSearchText(urlSearchText);
+      // Reset selections to match current applied filters
+      // Note: We don't track applied companies/locations here, so we start fresh
+      // The parent component should pass these if we want to show current state
+    }
+  }, [isOpen, urlSearchText]);
 
   // Extract unique companies and locations from jobs
   const { companies, locations } = useMemo(() => {
@@ -101,7 +113,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters }: FilterDi
     onApplyFilters({
       companies: Array.from(selectedCompanies),
       locations: Array.from(selectedLocations),
-      searchText,
+      searchText: localSearchText || '',
     });
     onClose();
   };
@@ -109,7 +121,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters }: FilterDi
   const handleReset = () => {
     setSelectedCompanies(new Set());
     setSelectedLocations(new Set());
-    setSearchText('');
+    setLocalSearchText('');
     setCompanySearchText('');
     setLocationSearchText('');
   };
@@ -180,8 +192,8 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters }: FilterDi
               <input
                 type="text"
                 placeholder="Search job titles, companies, locations..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                value={localSearchText}
+                onChange={(e) => setLocalSearchText(e.target.value)}
                 className={clsx(
                   'w-full px-4 py-2.5',
                   'bg-transparent border-none text-white text-[13px] outline-none',
