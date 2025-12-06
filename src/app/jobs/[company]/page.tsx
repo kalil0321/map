@@ -5,7 +5,7 @@ import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { generateJobSlug, generateCompanySlug, slugify } from '@/lib/slug-utils';
 import { generateStaticHeatmapUrl } from '@/utils/map-helpers';
 import { generateBreadcrumbSchema } from '@/lib/structured-data';
-import { CompanyJobList } from '@/components/company-job-list';
+import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
 type Params = { company: string };
@@ -130,7 +130,7 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                             <p className="text-white/60 text-[14px] m-0">{matchingJobs.length.toLocaleString()} opportunities</p>
                         </div>
 
-                        <CompanyJobList jobs={matchingJobs} />
+                        <AllJobsList jobs={matchingJobs} hideCompanyName={true} />
                     </section>
                 </main>
             </div>
