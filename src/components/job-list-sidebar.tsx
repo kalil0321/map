@@ -8,6 +8,9 @@ import type { JobMarker } from '@/types';
 import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatSalary } from '@/utils/salary-format';
+import { formatJobDate, getJobDate } from '@/utils/date-format';
+import { SaveJobButton } from '@/components/save-job-button';
+import { addUtmParams } from '@/utils/url-utils';
 
 interface JobListSidebarProps {
   jobs: JobMarker[];
@@ -17,7 +20,7 @@ interface JobListSidebarProps {
   filteredJobs?: JobMarker[] | null;
 }
 
-type SortOption = 'company' | 'location' | 'title';
+type SortOption = 'company' | 'location' | 'title' | 'recent';
 
 // Normalized job data structure for faster filtering
 interface NormalizedJob extends JobMarker {
@@ -49,7 +52,7 @@ const JobItem = memo(function JobItem({
       )}
       onClick={handleClick}
     >
-      {/* Company and Salary */}
+      {/* Company, Salary, and Date */}
       <div className="flex items-center gap-2 mb-1 flex-wrap">
         <Link
           href={`/company/${generateCompanySlug(job.company)}`}
@@ -63,6 +66,18 @@ const JobItem = memo(function JobItem({
         {formatSalary(job) && (
           <span className="text-[10px] lg:text-[11px] xl:text-[12px] text-green-400/80 font-medium shrink-0">
             {formatSalary(job)}
+          </span>
+        )}
+        {formatJobDate(job) && (
+          <span
+            className={clsx(
+              'text-[10px] lg:text-[11px] xl:text-[12px] font-medium shrink-0 rounded-full px-[6px] py-0.5 border',
+              formatJobDate(job) === 'New'
+                ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                : 'bg-white/8 text-white/70 border-white/12'
+            )}
+          >
+            {formatJobDate(job)}
           </span>
         )}
       </div>
@@ -97,36 +112,39 @@ const JobItem = memo(function JobItem({
         <span className="truncate">{job.location}</span>
       </div>
 
-      {/* View Job Button */}
-      <Link
-        href={job.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className={clsx(
-          'inline-flex items-center gap-1.5',
-          'px-[10px] py-1 bg-white/8 text-white no-underline rounded-full',
-          'text-[11px] lg:text-[12px] xl:text-[13px] font-medium border border-white/12',
-          'transition-[border-color,background-color] duration-200 ease-in-out',
-          'hover:bg-white/12 hover:border-white/20'
-        )}
-      >
-        View Job
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      {/* Actions */}
+      <div className="flex items-center gap-1.5">
+        <SaveJobButton atsId={job.ats_id} variant="icon" />
+        <Link
+          href={addUtmParams(job.url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className={clsx(
+            'inline-flex items-center gap-1.5',
+            'px-[10px] py-1 bg-white/8 text-white no-underline rounded-full',
+            'text-[11px] lg:text-[12px] xl:text-[13px] font-medium border border-white/12',
+            'transition-[border-color,background-color] duration-200 ease-in-out',
+            'hover:bg-white/12 hover:border-white/20'
+          )}
         >
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          <polyline points="15 3 21 3 21 9" />
-          <line x1="10" y1="14" x2="21" y2="3" />
-        </svg>
-      </Link>
+          View Job
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 });
@@ -189,7 +207,8 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
     }
 
     // Sort jobs (optimize by avoiding array spread when not needed)
-    if (sortBy !== 'company' || debouncedSearchText.trim()) {
+    const shouldSort = sortBy !== 'company' || debouncedSearchText.trim();
+    if (shouldSort) {
       // Only create new array if we need to sort
       const sorted = [...filtered];
       switch (sortBy) {
@@ -201,6 +220,16 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
           break;
         case 'title':
           sorted.sort((a, b) => a.title.localeCompare(b.title));
+          break;
+        case 'recent':
+          sorted.sort((a, b) => {
+            const dateA = getJobDate(a);
+            const dateB = getJobDate(b);
+            if (!dateA && !dateB) return 0;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB.getTime() - dateA.getTime(); // Newest first
+          });
           break;
       }
       return sorted;
@@ -334,6 +363,7 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
                   { value: 'company', label: 'Company' },
                   { value: 'location', label: 'Location' },
                   { value: 'title', label: 'Title' },
+                  { value: 'recent', label: 'Recent' },
                 ].map((option) => (
                   <button
                     key={option.value}

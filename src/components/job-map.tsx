@@ -9,6 +9,8 @@ import { StatsOverlay } from './stats-overlay';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
 import { generateCompanySlug } from '@/lib/slug-utils';
 import { formatSalary } from '@/utils/salary-format';
+import { SaveJobButton } from '@/components/save-job-button';
+import { addUtmParams } from '@/utils/url-utils';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface JobMapProps {
@@ -319,16 +321,16 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
     };
 
     // Ensure map always renders, even with 0 jobs
-    if (!mapboxToken) {
-      return (
-        <div className="w-screen h-screen flex items-center justify-center bg-black text-white">
-          <div className="text-center">
-            <h2>Mapbox token missing</h2>
-            <p>Please set VITE_MAPBOX_TOKEN in your .env file</p>
-          </div>
-        </div>
-      );
-    }
+    // if (!mapboxToken) {
+    //   return (
+    //     <div className="w-screen h-screen flex items-center justify-center bg-black text-white">
+    //       <div className="text-center">
+    //         <h2>Mapbox token missing</h2>
+    //         <p>Please set NEXT_PUBLIC_MAPBOX_TOKEN in your .env file</p>
+    //       </div>
+    //     </div>
+    //   );
+    // }
 
     console.log('JobMap render:', {
       jobsCount: jobs.length,
@@ -585,25 +587,29 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                   {popupJob.location}
                 </div>
 
-                <Link
-                  href={popupJob.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={clsx(
-                    'flex items-center justify-center gap-2',
-                    'px-4 py-2 bg-white/8 text-white no-underline rounded-full',
-                    'text-[13px] font-medium border border-white/12 w-full',
-                    'transition-[border-color,background-color] duration-200 ease-in-out',
-                    'hover:bg-white/12 hover:border-white/20'
-                  )}
-                >
-                  View Job
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                </Link>
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  <SaveJobButton atsId={popupJob.ats_id} variant="button" className="flex-1" />
+                  <Link
+                    href={addUtmParams(popupJob.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={clsx(
+                      'flex items-center justify-center gap-2 flex-1',
+                      'px-4 py-2 bg-white/8 text-white no-underline rounded-full',
+                      'text-[13px] font-medium border border-white/12',
+                      'transition-[border-color,background-color] duration-200 ease-in-out',
+                      'hover:bg-white/12 hover:border-white/20'
+                    )}
+                  >
+                    View Job
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </Link>
+                </div>
               </div>
             </Popup>
           )}
