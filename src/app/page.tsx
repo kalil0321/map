@@ -38,7 +38,7 @@ function HomeContent() {
   });
 
   // URL query state for age filter
-  const [ageFilter, setAgeFilter] = useQueryState('age', parseAsInteger.withDefault(null));
+  const [ageFilter, setAgeFilter] = useQueryState('age', parseAsInteger);
 
   // Track applied filters (excluding search and age which come from URL)
   const [appliedFilters, setAppliedFilters] = useState<Pick<FilterState, 'companies' | 'locations'>>({
