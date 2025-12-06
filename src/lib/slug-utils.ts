@@ -93,7 +93,7 @@ export function findJobBySlug<T extends { title: string; id: string; company: st
     const expectedSlug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
     const expectedParts = expectedSlug.split('/');
     if (expectedParts.length !== 2) return false;
-    
+
     const [expectedCompany, expectedValue] = expectedParts;
     return expectedCompany === companySlug && expectedValue === valueSlug;
   });

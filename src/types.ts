@@ -15,6 +15,9 @@ export interface JobMarker extends Job {
   salary_currency?: string | null;
   salary_period?: string | null;
   salary_summary?: string | null;
+  posted_at?: string | null;
+  description?: string | null;
+  ats_type?: string | null;
 }
 
 export interface JobAlert {

@@ -5,6 +5,7 @@ import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { findJobBySlug } from '@/lib/slug-utils';
 import { generateOGMapBackground } from '@/utils/og-image';
 import { formatSalary } from '@/utils/salary-format';
+import { formatJobDate } from '@/utils/date-format';
 import type { JobMarker } from '@/types';
 
 // Use Node.js runtime for better image processing support in production
@@ -128,7 +129,7 @@ export async function GET(request: NextRequest) {
               gap: '16px',
             }}
           >
-            {/* Company badge */}
+            {/* Company and Age badges */}
             <div
               style={{
                 display: 'flex',
@@ -150,6 +151,28 @@ export async function GET(request: NextRequest) {
               >
                 {job.company.toUpperCase()}
               </div>
+              {formatJobDate(job) && (
+                <div
+                  style={{
+                    background: formatJobDate(job) === 'New'
+                      ? 'rgba(34, 197, 94, 0.2)'
+                      : 'rgba(59, 130, 246, 0.2)',
+                    border: formatJobDate(job) === 'New'
+                      ? '1px solid rgba(34, 197, 94, 0.4)'
+                      : '1px solid rgba(59, 130, 246, 0.4)',
+                    borderRadius: '9999px',
+                    padding: '8px 20px',
+                    fontSize: '20px',
+                    color: formatJobDate(job) === 'New'
+                      ? 'rgba(34, 197, 94, 1)'
+                      : 'rgba(96, 165, 250, 1)',
+                    fontWeight: '600',
+                    display: 'flex',
+                  }}
+                >
+                  {formatJobDate(job)}
+                </div>
+              )}
             </div>
 
             {/* Job title */}
@@ -197,18 +220,23 @@ export async function GET(request: NextRequest) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  fontSize: '28px',
-                  color: 'rgba(34, 197, 94, 0.9)',
-                  fontWeight: '600',
+                  fontSize: '32px',
+                  color: 'rgba(34, 197, 94, 1)',
+                  fontWeight: '700',
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '2px solid rgba(34, 197, 94, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  width: 'fit-content',
                 }}
               >
                 <svg
-                  width="28"
-                  height="28"
+                  width="32"
+                  height="32"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                 >
                   <line x1="12" y1="1" x2="12" y2="23" />
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />

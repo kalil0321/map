@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
-import { useQueryState } from 'nuqs';
+import { useQueryState, parseAsInteger } from 'nuqs';
 import Link from 'next/link';
 import { JobMap } from '@/components/job-map';
 import { LoadingScreen } from '@/components/loading-screen';
@@ -16,6 +16,7 @@ import { AIService } from '@/services/ai-service';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
 import { Analytics } from '@vercel/analytics/react';
 import { useDebounce } from '@/hooks/use-debounce';
+import { getJobDate } from '@/utils/date-format';
 
 function HomeContent() {
   const [jobMarkers, setJobMarkers] = useState<JobMarker[]>([]);
@@ -36,7 +37,10 @@ function HomeContent() {
     clearOnDefault: true,
   });
 
-  // Track applied filters (excluding search which comes from URL)
+  // URL query state for age filter
+  const [ageFilter, setAgeFilter] = useQueryState('age', parseAsInteger.withDefault(null));
+
+  // Track applied filters (excluding search and age which come from URL)
   const [appliedFilters, setAppliedFilters] = useState<Pick<FilterState, 'companies' | 'locations'>>({
     companies: [],
     locations: [],
@@ -95,6 +99,16 @@ function HomeContent() {
       );
     }
 
+    // Filter by age
+    if (filters.postedWithin !== null) {
+      const cutoff = Date.now() - filters.postedWithin * 24 * 60 * 60 * 1000;
+      filtered = filtered.filter(job => {
+        const date = getJobDate(job);
+        if (!date) return false;
+        return date.getTime() >= cutoff;
+      });
+    }
+
     setFilteredJobs(filtered.length < jobMarkers.length ? filtered : null);
   }, [jobMarkers]);
 
@@ -107,20 +121,27 @@ function HomeContent() {
     // Sync search text to URL if different
     if (filters.searchText !== urlSearchText) {
       setUrlSearchText(filters.searchText || null);
-    } else {
-      applyFilters(filters);
     }
-  }, [applyFilters, urlSearchText, setUrlSearchText]);
+
+    // Sync age filter to URL if different
+    if (filters.postedWithin !== ageFilter) {
+      setAgeFilter(filters.postedWithin);
+    }
+
+    // Apply filters after syncing to URL
+    applyFilters(filters);
+  }, [applyFilters, urlSearchText, setUrlSearchText, ageFilter, setAgeFilter]);
 
   useEffect(() => {
-    if (jobMarkers.length > 0 && urlSearchText !== undefined) {
+    if (jobMarkers.length > 0 && urlSearchText !== undefined && ageFilter !== undefined) {
       applyFilters({
         companies: appliedFilters.companies,
         locations: appliedFilters.locations,
         searchText: urlSearchText || '',
+        postedWithin: ageFilter,
       });
     }
-  }, [urlSearchText, jobMarkers, applyFilters, appliedFilters]);
+  }, [urlSearchText, ageFilter, jobMarkers, applyFilters, appliedFilters]);
 
   const toggleJobList = useCallback(() => {
     setIsJobListOpen((prev) => !prev);

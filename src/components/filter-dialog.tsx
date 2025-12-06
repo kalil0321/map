@@ -17,6 +17,7 @@ export interface FilterState {
   companies: string[];
   locations: string[];
   searchText: string;
+  postedWithin: number | null;
 }
 
 export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText: urlSearchText, onSearchTextChange }: FilterDialogProps) {
@@ -25,6 +26,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
   const [localSearchText, setLocalSearchText] = useState(urlSearchText);
   const [companySearchText, setCompanySearchText] = useState('');
   const [locationSearchText, setLocationSearchText] = useState('');
+  const [postedWithin, setPostedWithin] = useState<number | null>(null);
 
   // Sync local state with URL when dialog opens or when URL changes externally
   useEffect(() => {
@@ -114,6 +116,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
       companies: Array.from(selectedCompanies),
       locations: Array.from(selectedLocations),
       searchText: localSearchText || '',
+      postedWithin,
     });
     onClose();
   };
@@ -124,6 +127,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
     setLocalSearchText('');
     setCompanySearchText('');
     setLocationSearchText('');
+    setPostedWithin(null);
   };
 
   // Close on Escape key
@@ -200,6 +204,35 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
                   'placeholder:text-white/40'
                 )}
               />
+            </div>
+          </div>
+
+          {/* Age */}
+          <div className="mb-5">
+            <label className="block text-[11px] font-medium text-white/50 mb-2">
+              Posted within
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Any time', value: null },
+                { label: '24h', value: 1 },
+                { label: '7 days', value: 7 },
+                { label: '30 days', value: 30 },
+              ].map((option) => (
+                <button
+                  key={option.label}
+                  onClick={() => setPostedWithin(option.value)}
+                  className={clsx(
+                    'px-[10px] py-1 rounded-full text-[11px] font-medium',
+                    'transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer',
+                    postedWithin === option.value
+                      ? 'bg-white/12 border border-white/20 text-white'
+                      : 'bg-white/8 border border-white/12 text-white/70 hover:bg-white/12 hover:border-white/20'
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
 

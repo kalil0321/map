@@ -52,6 +52,7 @@ export async function loadJobsWithCoordinates(filePath: string): Promise<JobMark
               salary_currency: row.salary_currency ? String(row.salary_currency) : null,
               salary_period: row.salary_period ? String(row.salary_period) : null,
               salary_summary: row.salary_summary ? String(row.salary_summary) : null,
+              posted_at: row.posted_at ? String(row.posted_at) : null,
             };
 
             return marker;
