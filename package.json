@@ -23,13 +23,15 @@
     "react-dom": "19.2.0",
     "react-map-gl": "^8.1.0",
     "react-markdown": "^10.1.0",
-    "zod": "^4.1.13"
+    "zod": "^4.1.13",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/pg": "^8.10.9",
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9",
