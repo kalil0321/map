@@ -107,9 +107,7 @@ const organizationSchema = {
   url: baseUrl,
   logo: `${baseUrl}/stapply_small.svg`,
   sameAs: [
-    // Add social media links when available
-    // "https://twitter.com/stapply",
-    // "https://linkedin.com/company/stapply",
+    "https://x.com/stapply_ai",
   ],
 };
 
