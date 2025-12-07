@@ -15,15 +15,166 @@ export interface ParsedDescription {
 }
 
 /**
- * Parse a job description text into structured sections
- * @param text Raw job description text
- * @returns Parsed description with sections
+ * Check if text contains HTML tags
  */
-export function parseJobDescription(text: string): ParsedDescription {
-  if (!text || !text.trim()) {
-    return { sections: [] };
+function isHTML(text: string): boolean {
+  return /<[^>]+>/.test(text);
+}
+
+/**
+ * Decode HTML entities in text
+ */
+function decodeHTMLEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_match, dec) => String.fromCharCode(dec))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+/**
+ * Strip HTML tags from text and decode entities
+ */
+function stripHTMLTags(html: string): string {
+  // First remove all HTML tags
+  const textOnly = html.replace(/<[^>]+>/g, '');
+  // Then decode HTML entities
+  return decodeHTMLEntities(textOnly).trim();
+}
+
+/**
+ * Parse HTML job description into structured sections
+ * Preserves the order of content as it appears in the HTML
+ */
+function parseHTMLDescription(html: string): ParsedDescription {
+  const sections: ParsedSection[] = [];
+
+  // Remove wrapper divs and closing div tags
+  let cleanHtml = html
+    .replace(/<div[^>]*>/gi, '')
+    .replace(/<\/div>/gi, '');
+
+  // Find all block-level elements with their positions
+  interface BlockElement {
+    type: string;
+    content: string;
+    position: number;
+    fullMatch: string;
   }
 
+  const elements: BlockElement[] = [];
+
+  // Find headings (h1-h6)
+  const headingRegex = /<(h[1-6])[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match;
+  while ((match = headingRegex.exec(cleanHtml)) !== null) {
+    elements.push({
+      type: 'heading',
+      content: match[2],
+      position: match.index,
+      fullMatch: match[0],
+    });
+  }
+
+  // Find paragraphs
+  const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  while ((match = paragraphRegex.exec(cleanHtml)) !== null) {
+    elements.push({
+      type: 'paragraph',
+      content: match[1],
+      position: match.index,
+      fullMatch: match[0],
+    });
+  }
+
+  // Find lists (ul and ol)
+  const listRegex = /<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi;
+  while ((match = listRegex.exec(cleanHtml)) !== null) {
+    elements.push({
+      type: 'list',
+      content: match[2],
+      position: match.index,
+      fullMatch: match[0],
+    });
+  }
+
+  // Sort elements by position to preserve document order
+  elements.sort((a, b) => a.position - b.position);
+
+  // Convert elements to sections
+  for (const element of elements) {
+    if (element.type === 'heading') {
+      const headingText = stripHTMLTags(element.content);
+      if (headingText) {
+        sections.push({
+          type: 'heading',
+          content: headingText,
+        });
+      }
+    } else if (element.type === 'list') {
+      // Extract list items
+      const items: string[] = [];
+      const itemRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let itemMatch;
+
+      while ((itemMatch = itemRegex.exec(element.content)) !== null) {
+        const item = stripHTMLTags(itemMatch[1]);
+        if (item) {
+          items.push(item);
+        }
+      }
+
+      if (items.length > 0) {
+        sections.push({
+          type: 'list',
+          content: '',
+          items: items,
+        });
+      }
+    } else if (element.type === 'paragraph') {
+      // Check if paragraph contains a link
+      const linkMatch = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i.exec(element.content);
+
+      if (linkMatch) {
+        // Paragraph contains a link - extract all text including link text
+        const linkText = stripHTMLTags(linkMatch[2]);
+        const textBeforeLink = stripHTMLTags(element.content.substring(0, element.content.indexOf(linkMatch[0])));
+        const textAfterLink = stripHTMLTags(element.content.substring(element.content.indexOf(linkMatch[0]) + linkMatch[0].length));
+
+        // Combine all text parts for the paragraph
+        const fullText = [textBeforeLink, linkText, textAfterLink].filter(Boolean).join(' ');
+
+        if (fullText) {
+          sections.push({
+            type: 'paragraph',
+            content: fullText,
+          });
+        }
+      } else {
+        // Regular paragraph without links
+        const paragraphText = stripHTMLTags(element.content);
+        if (paragraphText) {
+          sections.push({
+            type: 'paragraph',
+            content: paragraphText,
+          });
+        }
+      }
+    }
+  }
+
+  return { sections };
+}
+
+/**
+ * Parse plain text job description into structured sections
+ */
+function parsePlainTextDescription(text: string): ParsedDescription {
   const lines = text.split('\n');
   const sections: ParsedSection[] = [];
   let currentList: string[] = [];
@@ -116,6 +267,34 @@ export function parseJobDescription(text: string): ParsedDescription {
   flushList();
 
   return { sections };
+}
+
+/**
+ * Parse a job description text into structured sections
+ * Handles both HTML and plain text input
+ * @param text Raw job description text (HTML or plain text, may be entity-encoded)
+ * @returns Parsed description with sections
+ */
+export function parseJobDescription(text: string): ParsedDescription {
+  if (!text || !text.trim()) {
+    return { sections: [] };
+  }
+
+  // First decode HTML entities in case the HTML is double-encoded
+  // This handles cases where < is stored as &lt; in the database
+  let decodedText = text;
+
+  // Check if text contains encoded HTML entities
+  if (text.includes('&lt;') || text.includes('&gt;') || text.includes('&quot;')) {
+    decodedText = decodeHTMLEntities(text);
+  }
+
+  // Now detect if input is HTML and parse accordingly
+  if (isHTML(decodedText)) {
+    return parseHTMLDescription(decodedText);
+  } else {
+    return parsePlainTextDescription(decodedText);
+  }
 }
 
 /**
