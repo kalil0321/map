@@ -62,8 +62,20 @@ export function fuzzyMatch(
     return true;
   }
 
-  // Substring match (exact)
-  if (normalizedText.includes(normalizedQuery)) {
+  // Whole string fuzzy match (for cases like "openai" vs "OpenAI")
+  const wholeStringSimilarity = similarityRatio(normalizedText, normalizedQuery);
+  if (wholeStringSimilarity >= threshold) {
+    return true;
+  }
+
+  // Check if query appears as a complete word in text (word boundary match)
+  const wordBoundaryRegex = new RegExp(`\\b${normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+  if (wordBoundaryRegex.test(normalizedText)) {
+    return true;
+  }
+
+  // Substring match only if query is at least 3 characters (to avoid matching "ai" in "david ai")
+  if (normalizedQuery.length >= 3 && normalizedText.includes(normalizedQuery)) {
     return true;
   }
 
@@ -74,14 +86,31 @@ export function fuzzyMatch(
   // If query is a single word, check against each word in text
   if (queryWords.length === 1) {
     const queryWord = queryWords[0];
+    
+    // Skip very short queries (1-2 chars) to avoid false matches
+    if (queryWord.length <= 2) {
+      return normalizedText.includes(normalizedQuery);
+    }
+    
     for (const textWord of textWords) {
-      // Check substring match first (faster)
-      if (textWord.includes(queryWord) || queryWord.includes(textWord)) {
+      // Exact word match
+      if (textWord === queryWord) {
         return true;
       }
-      // Check fuzzy similarity
-      if (similarityRatio(textWord, queryWord) >= threshold) {
+      
+      // Check if query word is a complete substring of text word (e.g., "openai" in "openai inc")
+      // Only if query is at least 4 characters to avoid matching "ai" in "david ai"
+      if (queryWord.length >= 4 && textWord.includes(queryWord)) {
         return true;
+      }
+      
+      // Check fuzzy similarity only for words of similar length
+      // This prevents "openai" from matching "ai" via similarity
+      const lengthRatio = Math.min(queryWord.length, textWord.length) / Math.max(queryWord.length, textWord.length);
+      if (lengthRatio >= 0.5) { // Words must be at least 50% similar in length
+        if (similarityRatio(textWord, queryWord) >= threshold) {
+          return true;
+        }
       }
     }
     return false;
@@ -89,17 +118,29 @@ export function fuzzyMatch(
 
   // Multi-word query: check if all query words have matches
   return queryWords.every(queryWord => {
-    // First try exact substring match
-    if (normalizedText.includes(queryWord)) {
+    // Exact word match
+    if (textWords.some(textWord => textWord === queryWord)) {
       return true;
     }
-    // Then try fuzzy match against individual words
+    
+    // Word boundary match for each word
+    const wordRegex = new RegExp(`\\b${queryWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (wordRegex.test(normalizedText)) {
+      return true;
+    }
+    
+    // Substring match only for longer words
+    if (queryWord.length >= 3 && normalizedText.includes(queryWord)) {
+      return true;
+    }
+    
+    // Fuzzy match against individual words with length check
     for (const textWord of textWords) {
-      if (textWord.includes(queryWord) || queryWord.includes(textWord)) {
-        return true;
-      }
-      if (similarityRatio(textWord, queryWord) >= threshold) {
-        return true;
+      const lengthRatio = Math.min(queryWord.length, textWord.length) / Math.max(queryWord.length, textWord.length);
+      if (lengthRatio >= 0.5) {
+        if (similarityRatio(textWord, queryWord) >= threshold) {
+          return true;
+        }
       }
     }
     return false;
