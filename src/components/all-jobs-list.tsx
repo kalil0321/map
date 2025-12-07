@@ -11,6 +11,7 @@ import { formatJobDate } from '@/utils/date-format';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SaveJobButton } from '@/components/save-job-button';
 import { addUtmParams } from '@/utils/url-utils';
+import { fuzzyMatch } from '@/utils/fuzzy-match';
 import type { JobMarker } from '@/types';
 
 type Job = JobMarker;
@@ -41,6 +42,57 @@ function compareStrings(a: string, b: string): number {
     return normalizeForCompare(a).localeCompare(normalizeForCompare(b), undefined, { sensitivity: 'base' });
 }
 
+// Parse search text to extract special syntax
+interface ParsedSearch {
+    age: number | null;
+    company: string | null;
+    location: string | null;
+    generalSearch: string;
+}
+
+function parseSearchText(searchText: string): ParsedSearch {
+    if (!searchText?.trim()) {
+        return { age: null, company: null, location: null, generalSearch: '' };
+    }
+
+    let remainingText = searchText;
+    let age: number | null = null;
+    let company: string | null = null;
+    let location: string | null = null;
+
+    // Extract @age:{number}
+    const ageMatch = remainingText.match(/@age:(\d+)/i);
+    if (ageMatch) {
+        age = parseInt(ageMatch[1], 10);
+        remainingText = remainingText.replace(/@age:\d+/gi, '').trim();
+    }
+
+    // Extract @company:{company} - match until next @ tag or end of string
+    // Handles spaces in company names by matching until next @ or end
+    const companyMatch = remainingText.match(/@company:([^@]+?)(?=\s*@|\s*$)/i);
+    if (companyMatch) {
+        company = companyMatch[1].trim();
+        // Remove the matched pattern, being careful with spaces
+        remainingText = remainingText.replace(/@company:[^@]+?(?=\s*@|\s*$)/gi, '').trim();
+    }
+
+    // Extract @location:{location} - match until next @ tag or end of string
+    // Handles spaces in location names by matching until next @ or end
+    const locationMatch = remainingText.match(/@location:([^@]+?)(?=\s*@|\s*$)/i);
+    if (locationMatch) {
+        location = locationMatch[1].trim();
+        // Remove the matched pattern, being careful with spaces
+        remainingText = remainingText.replace(/@location:[^@]+?(?=\s*@|\s*$)/gi, '').trim();
+    }
+
+    return {
+        age,
+        company: company || null,
+        location: location || null,
+        generalSearch: remainingText,
+    };
+}
+
 export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps) {
     const [urlSearchText, setUrlSearchText] = useQueryState('search', {
         defaultValue: '',
@@ -49,7 +101,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
     const [ageFilter, setAgeFilter] = useQueryState('age', parseAsInteger.withDefault(null as any));
     const [localSearchText, setLocalSearchText] = useState(urlSearchText || '');
     const debouncedSearchText = useDebounce(localSearchText, 300);
-    const [sortBy, setSortBy] = useState<SortOption>('title');
+    const [sortBy, setSortBy] = useState<SortOption>('recent');
     const [isPending, startTransition] = useTransition();
     const hasJobs = jobs.length > 0;
     const parentRef = useRef<HTMLDivElement>(null);
@@ -83,13 +135,28 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         }
     }, [debouncedSearchText, urlSearchText, setUrlSearchText]);
 
+    // Parse search text and sync @age with ageFilter query param
+    const parsedSearch = useMemo(() => parseSearchText(debouncedSearchText || ''), [debouncedSearchText]);
+
+    // Sync @age syntax with ageFilter query param
+    useEffect(() => {
+        if (parsedSearch.age !== null && parsedSearch.age !== ageFilter) {
+            startTransition(() => {
+                setAgeFilter(parsedSearch.age);
+            });
+        }
+        // Note: We don't clear ageFilter when @age is removed to preserve user's button selection
+    }, [parsedSearch.age, ageFilter, setAgeFilter]);
+
     // Filter and sort jobs using cached timestamps
     const processedJobs = useMemo(() => {
         let filtered: JobWithTimestamp[] = jobsWithTimestamps;
 
         // Apply age filter using cached timestamps (much faster than parsing dates)
-        if (ageFilter !== null) {
-            const cutoff = Date.now() - ageFilter * 24 * 60 * 60 * 1000;
+        // Use parsedSearch.age if available, otherwise fall back to ageFilter
+        const effectiveAge = parsedSearch.age !== null ? parsedSearch.age : ageFilter;
+        if (effectiveAge !== null) {
+            const cutoff = Date.now() - effectiveAge * 24 * 60 * 60 * 1000;
             filtered = filtered.filter(job => {
                 const timestamp = job._dateTimestamp;
                 if (timestamp === null) return false;
@@ -97,13 +164,27 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
             });
         }
 
-        // Apply search filter (use debounced value)
-        if (debouncedSearchText?.trim()) {
-            const normalizedSearch = normalizeForSearch(debouncedSearchText);
+        // Apply company filter using fuzzy matching
+        if (parsedSearch.company) {
             filtered = filtered.filter(job =>
-                normalizeForSearch(job.title).includes(normalizedSearch) ||
-                normalizeForSearch(job.company).includes(normalizedSearch) ||
-                normalizeForSearch(job.location).includes(normalizedSearch)
+                fuzzyMatch(job.company, parsedSearch.company!, 0.95)
+            );
+        }
+
+        // Apply location filter using fuzzy matching
+        if (parsedSearch.location) {
+            filtered = filtered.filter(job =>
+                fuzzyMatch(job.location, parsedSearch.location!, 0.85)
+            );
+        }
+
+        // Apply general search filter using fuzzy matching
+        if (parsedSearch.generalSearch?.trim()) {
+            const generalSearchLower = normalizeForSearch(parsedSearch.generalSearch);
+            filtered = filtered.filter(job =>
+                fuzzyMatch(job.title, generalSearchLower, 0.75) ||
+                fuzzyMatch(job.company, generalSearchLower, 0.75) ||
+                fuzzyMatch(job.location, generalSearchLower, 0.75)
             );
         }
 
@@ -133,7 +214,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         }
 
         return sorted;
-    }, [jobsWithTimestamps, debouncedSearchText, sortBy, ageFilter]);
+    }, [jobsWithTimestamps, parsedSearch, sortBy, ageFilter]);
 
     // Cache formatted dates to avoid repeated formatting calls
     const formattedDateCache = useMemo(() => {
@@ -183,7 +264,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                 >
                     <input
                         type="text"
-                        placeholder={hasJobs ? 'Search jobs by title, company, or location...' : 'No roles yet'}
+                        placeholder={hasJobs ? 'Search jobs (e.g., @company:Deepmind @location:SF engineer)' : 'No roles yet'}
                         value={localSearchText}
                         onChange={(e) => setLocalSearchText(e.target.value)}
                         className={clsx(
@@ -257,30 +338,26 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
             </div>
 
             {/* Results count */}
-            {debouncedSearchText && (
+            {debouncedSearchText && processedJobs.length > 0 && (
                 <div className="text-[13px] text-white/60">
-                    {processedJobs.length === 0 ? (
-                        <span>No jobs found matching &quot;{debouncedSearchText}&quot;</span>
-                    ) : (
-                        <span>
-                            {processedJobs.length.toLocaleString()} job{processedJobs.length === 1 ? '' : 's'} found
-                        </span>
-                    )}
+                    <span>
+                        {processedJobs.length.toLocaleString()} job{processedJobs.length === 1 ? '' : 's'} found
+                    </span>
                 </div>
             )}
 
             {/* Job List */}
             <div
                 ref={parentRef}
-                className="h-[600px] overflow-y-auto custom-scrollbar"
+                className="h-[600px] overflow-y-auto custom-scrollbar relative"
             >
                 {isPending ? (
-                    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center py-12 px-6 text-center">
                         <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
                         <p className="text-[14px] text-white/70 font-medium m-0">Loading jobs...</p>
                     </div>
                 ) : processedJobs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center py-12 px-6 text-center">
                         <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
                             <svg
                                 width="24"
@@ -305,12 +382,16 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                         style={{
                             height: `${virtualizer.getTotalSize()}px`,
                             position: 'relative',
+                            width: '100%',
                         }}
                     >
                         {virtualizer.getVirtualItems().map((virtualItem) => {
                             const job = processedJobs[virtualItem.index];
+                            if (!job) return null;
+
                             const slug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
-                            const uniqueKey = job.ats_id || `${job.company}-${job.title}-${virtualItem.index}`;
+                            // Always include index to ensure uniqueness, even if ats_id is duplicated
+                            const uniqueKey = `${job.ats_id || job.id || 'unknown'}-${virtualItem.index}`;
                             const formattedDate = formattedDateCache.get(job.ats_id || job.id);
 
                             return (
@@ -389,9 +470,9 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
                                         <SaveJobButton atsId={job.ats_id} variant="compact" />
-                                        {/* <Link
+                                        <Link
                                             href={addUtmParams(job.url)}
-                                            className="inline-flex items-center gap-1 px-[10px] py-0.5 bg-white/8 text-white no-underline rounded-full text-[11px] md:text-[12px] font-medium border border-white/12 transition-[border-color,background-color] duration-200 ease-in-out hover:bg-white/12 hover:border-white/20"
+                                            className="items-center gap-1 px-[10px] py-0.5 bg-white/8 text-white no-underline rounded-full text-[11px] md:text-[12px] font-medium border border-white/12 transition-[border-color,background-color] duration-200 ease-in-out hover:bg-white/12 hover:border-white/20 hidden"
                                         >
                                             View Job
                                             <svg
@@ -407,7 +488,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                             >
                                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
                                             </svg>
-                                        </Link> */}
+                                        </Link>
                                     </div>
                                 </div>
                             );
