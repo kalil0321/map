@@ -219,7 +219,7 @@ function HomeContent() {
   return (
     <>
       {/* Hidden heading for SEO */}
-      <h1 className="sr-only">Stapply Job Map - Explore Jobs at Tech Companies Worldwide</h1>
+      <h1 className="sr-only">Stapply Map - Explore Jobs at Tech Companies Worldwide</h1>
       <Analytics />
       <JobMap
         jobs={jobMarkers}

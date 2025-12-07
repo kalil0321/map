@@ -9,7 +9,7 @@ const baseUrl = "https://map.stapply.ai";
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Stapply Job Map - Explore Jobs at Tech Companies Worldwide",
+    default: "Stapply Map - Explore Jobs at Tech Companies Worldwide",
     template: "%s | Stapply",
   },
   description: "Interactive map visualizer for exploring job opportunities worldwide. Search, filter, and discover jobs from top tech companies.",
@@ -60,21 +60,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: baseUrl,
-    siteName: "Stapply Job Map",
-    title: "Stapply Job Map - Explore Jobs at Tech Companies Worldwide",
+    siteName: "Stapply Map",
+    title: "Stapply Map - Explore Jobs at Tech Companies Worldwide",
     description: "Interactive map visualizer for exploring job opportunities worldwide. Search, filter, and discover jobs from top tech companies.",
     images: [
       {
         url: "/opengraph-image.jpeg",
         width: 1200,
         height: 630,
-        alt: "Stapply Job Map - Explore Jobs at Tech Companies Worldwide",
+        alt: "Stapply Map - Explore Jobs at Tech Companies Worldwide",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Stapply Job Map - Explore Jobs at Tech Companies Worldwide",
+    title: "Stapply Map - Explore Jobs at Tech Companies Worldwide",
     description: "Interactive map visualizer for exploring job opportunities worldwide",
     images: ["/opengraph-image.jpeg"],
   },
@@ -114,7 +114,7 @@ const organizationSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Stapply Job Map",
+  name: "Stapply Map",
   url: baseUrl,
   description: "Interactive map visualizer for exploring job opportunities from tech companies worldwide",
 };
