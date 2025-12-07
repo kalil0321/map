@@ -6,7 +6,7 @@ export function addUtmParams(
 ): string {
     try {
         const urlObj = new URL(url);
-        
+
         if (!urlObj.searchParams.has('utm_source')) {
             urlObj.searchParams.set('utm_source', source);
         }
@@ -16,7 +16,7 @@ export function addUtmParams(
         if (!urlObj.searchParams.has('utm_campaign')) {
             urlObj.searchParams.set('utm_campaign', campaign);
         }
-        
+
         return urlObj.toString();
     } catch {
         return url;
