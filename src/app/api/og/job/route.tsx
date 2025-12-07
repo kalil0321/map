@@ -1,9 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { Buffer } from 'buffer';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { findJobBySlug } from '@/lib/slug-utils';
-import { generateOGMapBackground } from '@/utils/og-image';
 import { formatSalary } from '@/utils/salary-format';
 import { formatJobDate } from '@/utils/date-format';
 import type { JobMarker } from '@/types';
@@ -27,11 +25,96 @@ export async function GET(request: NextRequest) {
     // Find job by matching the full slug (more reliable than extracting hash)
     const job = findJobBySlug<JobMarker>(allJobs, companySlug, valueSlug);
 
+    // If job is not found, generate a special OG image without a map
     if (!job) {
-      return new Response('Job not found', { status: 404 });
+      return new ImageResponse(
+        (
+          <div
+            style={{
+              height: '100%',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              background: 'linear-gradient(120deg, #1e293b 0%, #475569 100%)',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              position: 'relative',
+            }}
+          >
+            {/* Logo at the top */}
+            <div
+              style={{
+                marginBottom: '32px',
+                display: 'flex',
+                gap: '20px',
+                alignItems: 'center',
+              }}
+            >
+              <svg
+                width="60"
+                height="60"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <rect x="3" y="6" width="14" height="16" rx="2" fill="#3b82f6" opacity="0.3" />
+                <rect x="4" y="4" width="14" height="16" rx="2" fill="#3b82f6" opacity="0.8" />
+                <rect x="5" y="2" width="14" height="16" rx="2" fill="#2563eb" opacity="0.9" />
+                <rect x="7" y="4" width="10" height="3" rx="1" fill="white" />
+                <line x1="7" y1="9" x2="17" y2="9" strokeWidth="0.5" stroke="white" opacity="0.6" />
+                <line x1="7" y1="11" x2="15" y2="11" strokeWidth="0.5" stroke="white" opacity="0.6" />
+                <line x1="7" y1="13" x2="16" y2="13" strokeWidth="0.5" stroke="white" opacity="0.6" />
+              </svg>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                textAlign: 'center',
+                maxWidth: '700px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '48px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  marginBottom: '22px',
+                }}
+              >
+                Job Not Found
+              </div>
+              <div
+                style={{
+                  fontSize: '28px',
+                  color: 'rgba(255,255,255,0.75)',
+                  marginBottom: '8px',
+                  fontWeight: '400'
+                }}
+              >
+                This job has been deleted or is no longer available.
+              </div>
+              <div
+                style={{
+                  fontSize: '20px',
+                  color: 'rgba(255,255,255,0.45)',
+                  marginTop: '38px'
+                }}
+              >
+                map.stapply.ai — Explore new jobs & roles on the map
+              </div>
+            </div>
+          </div>
+        ),
+        {
+          width: 1200,
+          height: 630,
+        }
+      );
     }
 
     // Generate map background URL
+    const { generateOGMapBackground } = await import('@/utils/og-image');
     const mapUrl = generateOGMapBackground(job.lng, job.lat, 4, 1200, 630);
 
     // Fetch the map image and convert to data URL for ImageResponse compatibility
@@ -69,8 +152,8 @@ export async function GET(request: NextRequest) {
             alt=""
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
+              top: '0',
+              left: '0',
               width: '100%',
               height: '100%',
               objectFit: 'cover',
@@ -80,10 +163,10 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+              top: '0',
+              left: '0',
+              right: '0',
+              bottom: '0',
               background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
             }}
           />
@@ -92,11 +175,11 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               position: 'absolute',
-              top: 48,
-              left: 48,
+              top: '48px',
+              left: '48px',
               display: 'flex',
               alignItems: 'center',
-              gap: 20,
+              gap: '20px',
               zIndex: 2,
             }}
           >
@@ -120,9 +203,9 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
+              bottom: '0',
+              left: '0',
+              right: '0',
               padding: '60px',
               display: 'flex',
               flexDirection: 'column',
