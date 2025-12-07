@@ -2,7 +2,7 @@ import type { JobMarker } from '@/types';
 
 /**
  * Format job posting date for display
- * Returns "New" if posted today, or time elapsed (days/weeks/+6mo)
+ * Returns "New" if posted today or yesterday, or time elapsed (days/weeks/+6mo)
  */
 export function formatJobDate(job: JobMarker): string | null {
     if (!job.posted_at) {
@@ -25,8 +25,8 @@ export function formatJobDate(job: JobMarker): string | null {
         const diffMs = today.getTime() - postedDay.getTime();
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        // Posted today
-        if (diffDays === 0) {
+        // Posted today or yesterday - show as "New"
+        if (diffDays === 0 || diffDays === 1) {
             return 'New';
         }
 
@@ -55,7 +55,7 @@ export function formatJobDate(job: JobMarker): string | null {
 }
 
 /**
- * Check if job was posted today
+ * Check if job was posted today or yesterday (is "new")
  */
 export function isJobNew(job: JobMarker): boolean {
     if (!job.posted_at) {
@@ -73,7 +73,11 @@ export function isJobNew(job: JobMarker): boolean {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const postedDay = new Date(postedDate.getFullYear(), postedDate.getMonth(), postedDate.getDate());
 
-        return today.getTime() === postedDay.getTime();
+        // Calculate difference in milliseconds
+        const diffMs = today.getTime() - postedDay.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        return diffDays === 0 || diffDays === 1;
     } catch (error) {
         return false;
     }
