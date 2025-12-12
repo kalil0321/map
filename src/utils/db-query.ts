@@ -1,22 +1,23 @@
-import { Client } from 'pg';
+import { cache } from 'react';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db/db';
+import { mapJobs } from '@/db/schema';
 
 /**
  * Fetch additional job details from the map_jobs PostgreSQL database table
  * This function queries the database for description, ats_type, and posted_at
  * based on the job's url
+ * Uses Drizzle ORM for type-safe queries and connection pooling
  */
-export async function fetchJobDetailsFromDb(
+export const fetchJobDetailsFromDb = cache(async (
     atsId: string,
     url?: string
 ): Promise<{
     description: string | null;
     ats_type: string | null;
     posted_at: string | null;
-} | null> {
-    // Database connection string from environment variable
-    const databaseUrl = process.env.DATABASE_URL;
-
-    if (!databaseUrl) {
+} | null> => {
+    if (!db) {
         // Silently return null if DATABASE_URL is not configured
         // This allows the page to work without database connection
         return null;
@@ -27,29 +28,24 @@ export async function fetchJobDetailsFromDb(
         return null;
     }
 
-    const client = new Client({
-        connectionString: databaseUrl,
-    });
-
     try {
-        await client.connect();
-
-        // Query the map_jobs table
+        // Query the map_jobs table using Drizzle
         // Matches jobs by url (most reliable identifier)
-        const query = `
-            SELECT description, ats_type, posted_at
-            FROM map_jobs
-            WHERE url = $1
-            LIMIT 1
-        `;
+        const result = await db
+            .select({
+                description: mapJobs.description,
+                ats_type: mapJobs.atsType,
+                posted_at: mapJobs.postedAt,
+            })
+            .from(mapJobs)
+            .where(eq(mapJobs.url, url))
+            .limit(1);
 
-        const result = await client.query(query, [url]);
-
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return null;
         }
 
-        const row = result.rows[0];
+        const row = result[0];
         return {
             description: row.description || null,
             ats_type: row.ats_type || null,
@@ -59,8 +55,5 @@ export async function fetchJobDetailsFromDb(
         console.error('Error fetching job details from PostgreSQL database:', error);
         // Return null on error to allow the page to still render with CSV data
         return null;
-    } finally {
-        await client.end();
     }
-}
-
+});

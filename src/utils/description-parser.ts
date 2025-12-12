@@ -4,10 +4,13 @@
  */
 
 export interface ParsedSection {
-  type: 'heading' | 'paragraph' | 'list' | 'link';
+  type: 'heading' | 'paragraph' | 'list' | 'link' | 'salary';
   content: string;
   items?: string[]; // For list type
   url?: string; // For link type
+  salaryMin?: string; // For salary type
+  salaryMax?: string; // For salary type
+  salaryCurrency?: string; // For salary type
 }
 
 export interface ParsedDescription {
@@ -48,14 +51,147 @@ function stripHTMLTags(html: string): string {
 }
 
 /**
+ * Extract salary information from HTML
+ * Looks for common salary patterns in job descriptions
+ * Returns the salary section and its position in the HTML
+ */
+function extractSalaryFromHTML(html: string): { section: ParsedSection; position: number } | null {
+  // Find all pay-range divs and check each one for salary amounts
+  const payRangeRegex = /<div[^>]*class=["'][^"']*pay-range[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
+  let payRangeMatch;
+
+  while ((payRangeMatch = payRangeRegex.exec(html)) !== null) {
+    const payRangeContent = payRangeMatch[1];
+    const payRangePosition = payRangeMatch.index;
+
+    // Extract salary amounts from spans within pay-range
+    const spanRegex = /<span[^>]*>([^<]+)<\/span>/gi;
+    const spans: string[] = [];
+    let spanMatch;
+
+    while ((spanMatch = spanRegex.exec(payRangeContent)) !== null) {
+      const text = stripHTMLTags(spanMatch[1]).trim();
+      // Skip divider spans (—, -, etc.) but keep salary amounts
+      if (text && text !== '—' && text !== '-' && text !== '–') {
+        spans.push(text);
+      }
+    }
+
+    // Look for salary amounts with various formats:
+    // - US format: $385,000 or $385000
+    // - EU format: €155.000 or €155000
+    // Support $, £, €, ¥ currencies with commas or periods as thousand separators
+    const salaryAmounts = spans.filter(s => /[€$£¥]\s*[\d,\.]+/.test(s));
+
+    if (salaryAmounts.length >= 2) {
+      // Extract min and max
+      const min = salaryAmounts[0];
+      const max = salaryAmounts[1];
+
+      // Extract currency from the salary string
+      const currencyMatch = min.match(/^([€$£¥])/);
+      const currency = currencyMatch ? currencyMatch[1] : '';
+
+      // Clean up the amounts (remove currency symbols and extra text, normalize separators)
+      // Handle both comma and period as thousand separators
+      const cleanMin = min.replace(/[^\d,\.]/g, '').replace(/[,\.]/g, '');
+      const cleanMax = max.replace(/[^\d,\.]/g, '').replace(/[,\.]/g, '');
+
+      // Try to extract description text from nearby content
+      let description = 'Annual Salary';
+      const titleRegex = /<div[^>]*class=["'][^"']*title[^"']*["'][^>]*>([^<]+)<\/div>/i;
+      const titleMatch = titleRegex.exec(html);
+      if (titleMatch) {
+        const titleText = stripHTMLTags(titleMatch[1]).trim();
+        if (titleText) {
+          description = titleText;
+        }
+      }
+
+      return {
+        section: {
+          type: 'salary',
+          content: description,
+          salaryMin: cleanMin,
+          salaryMax: cleanMax,
+          salaryCurrency: currency,
+        },
+        position: payRangePosition,
+      };
+    } else if (salaryAmounts.length === 1) {
+      // Single salary amount
+      const amount = salaryAmounts[0];
+      const currencyMatch = amount.match(/^([€$£¥])/);
+      const currency = currencyMatch ? currencyMatch[1] : '';
+      const cleanAmount = amount.replace(/[^\d,\.]/g, '').replace(/[,\.]/g, '');
+
+      return {
+        section: {
+          type: 'salary',
+          content: 'Compensation',
+          salaryMin: cleanAmount,
+          salaryMax: cleanAmount,
+          salaryCurrency: currency,
+        },
+        position: payRangePosition,
+      };
+    }
+  }
+
+  // If we didn't find salary in pay-range divs, try text patterns
+
+  // Pattern 2: Look for salary in plain text paragraphs with common keywords
+  // Match: "base salary range... is $200,000 - $300,000"
+  const salaryPattern1 = /(?:salary|compensation|pay)(?:\s+range)?[:\s]+\$\s*([\d,]+)\s*(?:-|to|–|—)\s*\$\s*([\d,]+)/i;
+  const salaryPattern2 = /\$\s*([\d,]+)\s*(?:-|to|–|—)\s*\$\s*([\d,]+)\s*(?:per|\/)\s*(?:year|annum|annually)/i;
+  // New pattern for "is $X - $Y" format
+  const salaryPattern3 = /(?:is|are)\s+\$\s*([\d,]+)\s*(?:-|to|–|—)\s*\$\s*([\d,]+)/i;
+
+  let textMatch = salaryPattern1.exec(html);
+  if (!textMatch) {
+    textMatch = salaryPattern2.exec(html);
+  }
+  if (!textMatch) {
+    textMatch = salaryPattern3.exec(html);
+  }
+
+  if (textMatch) {
+    return {
+      section: {
+        type: 'salary',
+        content: 'Salary Range',
+        salaryMin: textMatch[1].replace(/,/g, ''),
+        salaryMax: textMatch[2].replace(/,/g, ''),
+        salaryCurrency: '$',
+      },
+      position: textMatch.index,
+    };
+  }
+
+  return null;
+}
+
+/**
  * Parse HTML job description into structured sections
  * Preserves the order of content as it appears in the HTML
  */
 function parseHTMLDescription(html: string): ParsedDescription {
   const sections: ParsedSection[] = [];
 
+  // First, try to extract salary information before removing divs
+  const salaryData = extractSalaryFromHTML(html);
+
+  // Remove the entire pay transparency/salary section from the HTML to avoid duplicate content
+  let cleanHtml = html;
+  if (salaryData) {
+    // Remove content-pay-transparency div and its contents
+    cleanHtml = cleanHtml.replace(/<div[^>]*class=["'][^"']*content-pay-transparency[^"']*["'][^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, '');
+    // Also remove standalone job__pay-ranges sections that might exist
+    cleanHtml = cleanHtml.replace(/<div[^>]*class=["'][^"']*job__pay-ranges[^"']*["'][^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi, '');
+  }
+
   // Remove wrapper divs and closing div tags
-  let cleanHtml = html
+  cleanHtml = cleanHtml
     .replace(/<div[^>]*>/gi, '')
     .replace(/<\/div>/gi, '');
 
@@ -65,6 +201,7 @@ function parseHTMLDescription(html: string): ParsedDescription {
     content: string;
     position: number;
     fullMatch: string;
+    section?: ParsedSection; // For salary sections
   }
 
   const elements: BlockElement[] = [];
@@ -72,12 +209,33 @@ function parseHTMLDescription(html: string): ParsedDescription {
   // Find headings (h1-h6)
   const headingRegex = /<(h[1-6])[^>]*>([\s\S]*?)<\/\1>/gi;
   let match;
+  let logisticsPosition: number | null = null;
+
   while ((match = headingRegex.exec(cleanHtml)) !== null) {
+    const headingText = stripHTMLTags(match[2]);
+    // Track position of "Logistics" heading to insert salary before it
+    if (headingText.toLowerCase().includes('logistics') || headingText.toLowerCase().includes('logistique')) {
+      logisticsPosition = match.index;
+    }
+
     elements.push({
       type: 'heading',
       content: match[2],
       position: match.index,
       fullMatch: match[0],
+    });
+  }
+
+  // Add salary element right before Logistics heading if found, otherwise use original position
+  if (salaryData) {
+    const salaryPosition = logisticsPosition !== null ? logisticsPosition - 1 : salaryData.position;
+
+    elements.push({
+      type: 'salary',
+      content: '',
+      position: salaryPosition,
+      fullMatch: '',
+      section: salaryData.section,
     });
   }
 
@@ -92,6 +250,40 @@ function parseHTMLDescription(html: string): ParsedDescription {
     });
   }
 
+  // Also parse plain text lines as paragraphs/headings (for mixed HTML/text formats like Lever)
+  // Split by newlines and check each line
+  const lines = cleanHtml.split('\n');
+  let currentPosition = 0;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    if (trimmedLine && !/<[^>]+>/.test(trimmedLine)) {
+      // Plain text line without HTML tags
+      // Check if it looks like a heading (all caps with colon, or title case)
+      const isAllCapsHeading = /^[A-Z][A-Z\s&,'-]+:$/.test(trimmedLine);
+
+      if (isAllCapsHeading) {
+        elements.push({
+          type: 'heading',
+          content: trimmedLine.replace(/:$/, ''),
+          position: currentPosition,
+          fullMatch: trimmedLine,
+        });
+      } else {
+        // Regular text paragraph
+        elements.push({
+          type: 'paragraph',
+          content: trimmedLine,
+          position: currentPosition,
+          fullMatch: trimmedLine,
+        });
+      }
+    }
+
+    currentPosition += line.length + 1; // +1 for newline
+  }
+
   // Find lists (ul and ol)
   const listRegex = /<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi;
   while ((match = listRegex.exec(cleanHtml)) !== null) {
@@ -103,12 +295,35 @@ function parseHTMLDescription(html: string): ParsedDescription {
     });
   }
 
+  // Find orphaned <li> tags (not wrapped in ul/ol) - common in Lever format
+  // Look for consecutive <li> tags and group them
+  const orphanedLiRegex = /(?:^|(?!<\/[uo]l>))((?:<li[^>]*>[\s\S]*?<\/li>\s*)+)/gi;
+  while ((match = orphanedLiRegex.exec(cleanHtml)) !== null) {
+    // Check if this match is already inside a ul/ol by checking if there's a ul/ol before it
+    const beforeText = cleanHtml.substring(Math.max(0, match.index - 100), match.index);
+    const hasListWrapper = /<(?:ul|ol)[^>]*>(?![\s\S]*<\/(?:ul|ol)>)/.test(beforeText);
+
+    if (!hasListWrapper) {
+      elements.push({
+        type: 'list',
+        content: match[1],
+        position: match.index,
+        fullMatch: match[0],
+      });
+    }
+  }
+
   // Sort elements by position to preserve document order
   elements.sort((a, b) => a.position - b.position);
 
   // Convert elements to sections
   for (const element of elements) {
-    if (element.type === 'heading') {
+    if (element.type === 'salary') {
+      // Add the pre-built salary section
+      if (element.section) {
+        sections.push(element.section);
+      }
+    } else if (element.type === 'heading') {
       const headingText = stripHTMLTags(element.content);
       if (headingText) {
         sections.push({
@@ -317,6 +532,14 @@ export function descriptionToHTML(parsed: ParsedDescription): string {
           return `<ul>${items}</ul>`;
         case 'link':
           return `<p>${escapeHTML(section.content)} <a href="${escapeHTML(section.url || '')}" target="_blank" rel="noopener noreferrer">${escapeHTML(section.url || '')}</a></p>`;
+        case 'salary':
+          const currency = section.salaryCurrency || '$';
+          const min = section.salaryMin || '';
+          const max = section.salaryMax || '';
+          const salaryText = min === max
+            ? `${currency}${min}`
+            : `${currency}${min} - ${currency}${max}`;
+          return `<div class="salary-section"><h3>💰 ${escapeHTML(section.content)}</h3><p class="salary-range">${escapeHTML(salaryText)}</p></div>`;
         default:
           return '';
       }

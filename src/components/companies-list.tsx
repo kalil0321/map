@@ -112,13 +112,20 @@ export function CompaniesList({ companies }: CompaniesListProps) {
                         <Link
                             key={name}
                             href={`/jobs/${generateCompanySlug(name)}`}
-                            className="block p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all group no-underline"
+                            className="block p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-200 group no-underline"
                         >
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium text-[14px] text-white truncate pr-4 uppercase">{name}</span>
-                                <span className="text-[12px] text-white/40 group-hover:text-white/60 bg-white/5 px-2 py-1 rounded-full border border-white/5">
-                                    {jobCount}
-                                </span>
+                            <div className="flex flex-col gap-3">
+                                <h3 className="font-semibold text-[15px] text-white/90 group-hover:text-white truncate uppercase tracking-tight leading-tight">
+                                    {name}
+                                </h3>
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-[12px] text-white/50 group-hover:text-white/60 font-medium">
+                                        {jobCount.toLocaleString()} {jobCount === 1 ? 'opening' : 'openings'}
+                                    </span>
+                                    <span className="text-[11px] text-white/40 group-hover:text-blue-400 transition-colors font-medium">
+                                        View →
+                                    </span>
+                                </div>
                             </div>
                         </Link>
                     ))}

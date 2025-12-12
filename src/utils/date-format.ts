@@ -2,7 +2,7 @@ import type { JobMarker } from '@/types';
 
 /**
  * Format job posting date for display
- * Returns "New" if posted today or yesterday, or time elapsed (days/weeks/+6mo)
+ * Returns "New" if posted today or yesterday, or time elapsed (days/weeks/months/years)
  */
 export function formatJobDate(job: JobMarker): string | null {
     if (!job.posted_at) {
@@ -32,23 +32,23 @@ export function formatJobDate(job: JobMarker): string | null {
 
         // Less than 7 days
         if (diffDays < 7) {
-            return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+            return `${diffDays}d`;
         }
 
         // Less than 4 weeks
         const diffWeeks = Math.floor(diffDays / 7);
         if (diffWeeks <= 4) {
-            return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
+            return `${diffWeeks}w`;
         }
 
-        // 4 weeks to 6 months - show in months
+        // 4 weeks to 12 months - show in months
         const diffMonths = Math.floor(diffDays / 30);
-        if (diffMonths < 6) {
-            return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
+        if (diffMonths < 12) {
+            return `${diffMonths}m`;
         }
 
-        // 6 months or more
-        return '+6mo';
+        // 12 months or more
+        return '+1y';
     } catch (error) {
         return null;
     }

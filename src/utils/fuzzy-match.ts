@@ -86,24 +86,24 @@ export function fuzzyMatch(
   // If query is a single word, check against each word in text
   if (queryWords.length === 1) {
     const queryWord = queryWords[0];
-    
+
     // Skip very short queries (1-2 chars) to avoid false matches
     if (queryWord.length <= 2) {
       return normalizedText.includes(normalizedQuery);
     }
-    
+
     for (const textWord of textWords) {
       // Exact word match
       if (textWord === queryWord) {
         return true;
       }
-      
+
       // Check if query word is a complete substring of text word (e.g., "openai" in "openai inc")
       // Only if query is at least 4 characters to avoid matching "ai" in "david ai"
       if (queryWord.length >= 4 && textWord.includes(queryWord)) {
         return true;
       }
-      
+
       // Check fuzzy similarity only for words of similar length
       // This prevents "openai" from matching "ai" via similarity
       const lengthRatio = Math.min(queryWord.length, textWord.length) / Math.max(queryWord.length, textWord.length);
@@ -122,18 +122,18 @@ export function fuzzyMatch(
     if (textWords.some(textWord => textWord === queryWord)) {
       return true;
     }
-    
+
     // Word boundary match for each word
     const wordRegex = new RegExp(`\\b${queryWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
     if (wordRegex.test(normalizedText)) {
       return true;
     }
-    
+
     // Substring match only for longer words
     if (queryWord.length >= 3 && normalizedText.includes(queryWord)) {
       return true;
     }
-    
+
     // Fuzzy match against individual words with length check
     for (const textWord of textWords) {
       const lengthRatio = Math.min(queryWord.length, textWord.length) / Math.max(queryWord.length, textWord.length);

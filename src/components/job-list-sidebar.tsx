@@ -7,10 +7,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { JobMarker } from '@/types';
 import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
 import { useDebounce } from '@/hooks/use-debounce';
-import { formatSalary } from '@/utils/salary-format';
 import { formatJobDate, getJobDate } from '@/utils/date-format';
+import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { SaveJobButton } from '@/components/save-job-button';
-import { addUtmParams } from '@/utils/url-utils';
+import { fuzzyMatch } from '@/utils/fuzzy-match';
 
 interface JobListSidebarProps {
   jobs: JobMarker[];
@@ -20,7 +20,7 @@ interface JobListSidebarProps {
   filteredJobs?: JobMarker[] | null;
 }
 
-type SortOption = 'company' | 'location' | 'title' | 'recent';
+type SortOption = 'company' | 'location' | 'title' | 'recent' | 'experience' | 'salary';
 
 // Normalized job data structure for faster filtering
 interface NormalizedJob extends JobMarker {
@@ -29,6 +29,60 @@ interface NormalizedJob extends JobMarker {
     companyLower: string;
     locationLower: string;
   };
+}
+
+// Extract numeric value from experience string for sorting (e.g., "3-5 years" -> 3, "5 years" -> 5)
+function getExperienceValue(experience: string | null | undefined): number {
+  if (!experience) return Infinity; // Jobs without experience go to the end
+  const numberMatch = experience.match(/\d+/);
+  return numberMatch ? parseInt(numberMatch[0], 10) : Infinity;
+}
+
+// Extract numeric value from salary_summary for sorting
+// Returns an object with value and isRange flag for proper sorting
+function getSalaryValue(salarySummary: string | null | undefined): number {
+  if (!salarySummary) return -1; // Jobs without salary go to the end (negative so they sort last)
+
+  // Remove currency symbols for comparison
+  const normalized = salarySummary.replace(/[$€£¥₹]/g, '');
+
+  // Try to extract from dict format: {'unit': 'USD', 'amount': '140900.0'}
+  const dictAmountMatch = normalized.match(/'amount':\s*['"]([^'"]+)['"]|"amount":\s*['"]([^'"]+)['"]/i);
+  if (dictAmountMatch) {
+    const amount = parseFloat(dictAmountMatch[1] || dictAmountMatch[2] || '');
+    // Treat dict as single value - add 0.5 to sort after ranges
+    if (!isNaN(amount)) return amount + 0.5;
+  }
+
+  // Try to extract from range format: "145,000-175,000" or "145K-175K"
+  const rangeMatch = normalized.match(/([\d,]+)\s*K?\s*[-–—]\s*([\d,]+)\s*K?/i);
+  if (rangeMatch) {
+    let min = parseFloat(rangeMatch[1].replace(/,/g, ''));
+    // Multiply by 1000 if K suffix is present
+    if (/K/i.test(rangeMatch[0])) {
+      min = min * 1000;
+    }
+    if (!isNaN(min)) {
+      // Use min value for ranges so they sort by lower bound
+      // Ranges come before single values at same min (no offset)
+      return min;
+    }
+  }
+
+  // Try to extract single value: "130900" or "130,900" or "145K"
+  const singleMatch = normalized.match(/([\d,]+)\s*K?/i);
+  if (singleMatch) {
+    let amount = parseFloat(singleMatch[1].replace(/,/g, ''));
+    // Multiply by 1000 if K suffix is present
+    if (/K/i.test(singleMatch[0])) {
+      amount = amount * 1000;
+    }
+    // Add 0.5 to single values so they sort after ranges with same min
+    // e.g., "145K-175K" (145000) comes before "145K" (145000.5)
+    if (!isNaN(amount)) return amount + 0.5;
+  }
+
+  return -1; // Could not parse, put at end
 }
 
 // Memoized job item component to prevent unnecessary re-renders
@@ -46,104 +100,83 @@ const JobItem = memo(function JobItem({
   return (
     <div
       className={clsx(
-        'p-4 transition-all duration-150',
+        'px-4 py-3.5 transition-all duration-150',
         'hover:bg-white/5 cursor-pointer',
         'w-full overflow-hidden'
       )}
       onClick={handleClick}
     >
-      {/* Company, Salary, and Date */}
-      <div className="flex items-center gap-2 mb-1 flex-wrap">
-        <Link
-          href={`/company/${generateCompanySlug(job.company)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-[10px] lg:text-[11px] xl:text-[12px] font-medium text-white/50 uppercase tracking-wider no-underline hover:text-blue-400 transition-colors truncate max-w-full"
-        >
-          {job.company}
-        </Link>
-        {formatSalary(job) && (
-          <span className="text-[10px] lg:text-[11px] xl:text-[12px] text-green-400/80 font-medium shrink-0">
-            {formatSalary(job)}
-          </span>
-        )}
-        {formatJobDate(job) && (
-          <span
-            className={clsx(
-              'text-[10px] lg:text-[11px] xl:text-[12px] font-medium shrink-0 rounded-full px-[6px] py-0.5 border',
-              formatJobDate(job) === 'New'
-                ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                : 'bg-white/8 text-white/70 border-white/12'
+      {/* Title, Company and Date Badge */}
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link
+              href={`/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`}
+              prefetch={true}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-[14px] lg:text-[15px] xl:text-[16px] font-medium text-white leading-tight m-0 no-underline hover:text-blue-400 transition-colors inline-block line-clamp-2 wrap-break-word"
+            >
+              {job.title}
+            </Link>
+            {formatExperience(job.experience) && (
+              <span className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 shrink-0">
+                {formatExperience(job.experience)}
+              </span>
             )}
+          </div>
+          <Link
+            href={`/company/${generateCompanySlug(job.company)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-[11px] lg:text-[12px] xl:text-[13px] font-medium text-white/50 uppercase tracking-wider no-underline hover:text-blue-400 transition-colors block w-fit mt-0.5"
           >
-            {formatJobDate(job)}
-          </span>
-        )}
-      </div>
-
-      {/* Title */}
-      <Link
-        href={`/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="text-[13px] lg:text-[14px] xl:text-[15px] font-medium text-white mb-1 leading-normal m-0 no-underline hover:text-blue-400 transition-colors block line-clamp-2 wrap-break-word"
-      >
-        {job.title}
-      </Link>
-
-      {/* Location */}
-      <div className="flex items-center gap-1.5 text-[12px] lg:text-[13px] xl:text-[14px] text-white/60 mb-3 min-w-0">
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="shrink-0"
-        >
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        <span className="truncate">{job.location}</span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1.5">
-        <SaveJobButton atsId={job.ats_id} variant="icon" />
-        <Link
-          href={addUtmParams(job.url)}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className={clsx(
-            'inline-flex items-center gap-1.5',
-            'px-[10px] py-1 bg-white/8 text-white no-underline rounded-full',
-            'text-[11px] lg:text-[12px] xl:text-[13px] font-medium border border-white/12',
-            'transition-[border-color,background-color] duration-200 ease-in-out',
-            'hover:bg-white/12 hover:border-white/20'
+            {job.company}
+          </Link>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {formatJobDate(job) && (
+            <span
+              className={clsx(
+                'text-[10px] lg:text-[11px] xl:text-[12px] font-medium shrink-0 rounded-full px-[6px] py-0.5 border',
+                formatJobDate(job) === 'New'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                  : 'bg-white/8 text-white/70 border-white/12'
+              )}
+            >
+              {formatJobDate(job)}
+            </span>
           )}
-        >
-          View Job
+          <SaveJobButton atsId={job.ats_id} variant="icon" />
+        </div>
+      </div>
+
+      {/* Location and Salary */}
+      <div className="flex items-center gap-2 text-[13px] lg:text-[14px] xl:text-[15px] text-white/60 mb-0 min-w-0 flex-wrap">
+        <div className="flex items-center gap-1.5 min-w-0">
           <svg
-            width="10"
-            height="10"
+            width="12"
+            height="12"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="shrink-0"
           >
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
           </svg>
-        </Link>
+          <span className="truncate">{job.location}</span>
+        </div>
+        {formatSalary(job) && (
+          <span className="text-green-400/80 font-medium shrink-0">
+            {formatSalary(job)}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -173,14 +206,19 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
     }));
   }, [displayJobs]);
 
-  // Deduplicate jobs by URL (memoized)
+  // Deduplicate jobs by URL + location + ID (memoized)
+  // This ensures jobs with the same URL but different locations are all shown
+  // Also ensures jobs with same URL+location but different IDs are shown separately
   const deduplicatedJobs = useMemo(() => {
-    const seenUrls = new Set<string>();
+    const seenKeys = new Set<string>();
     const deduplicated: NormalizedJob[] = [];
 
     for (const job of normalizedJobs) {
-      if (!seenUrls.has(job.url)) {
-        seenUrls.add(job.url);
+      // Use ats_id or id as part of the key to distinguish jobs with same URL+location
+      const jobId = job.ats_id || job.id || '';
+      const uniqueKey = `${job.url}|||${job.location}|||${jobId}`;
+      if (!seenKeys.has(uniqueKey)) {
+        seenKeys.add(uniqueKey);
         deduplicated.push(job);
       }
     }
@@ -192,16 +230,16 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
   const processedJobs = useMemo(() => {
     let filtered = deduplicatedJobs;
 
-    // Apply search filter (using pre-normalized data)
+    // Apply search filter using fuzzy matching
     if (debouncedSearchText.trim()) {
       const searchLower = debouncedSearchText.toLowerCase();
       // Pre-allocate array for better performance
       filtered = filtered.filter(job => {
         const norm = job._normalized;
         return (
-          norm.titleLower.includes(searchLower) ||
-          norm.companyLower.includes(searchLower) ||
-          norm.locationLower.includes(searchLower)
+          fuzzyMatch(job.title, searchLower, 0.75) ||
+          fuzzyMatch(job.company, searchLower, 0.75) ||
+          fuzzyMatch(job.location, searchLower, 0.75)
         );
       });
     }
@@ -229,6 +267,20 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
             if (!dateA) return 1;
             if (!dateB) return -1;
             return dateB.getTime() - dateA.getTime(); // Newest first
+          });
+          break;
+        case 'experience':
+          sorted.sort((a, b) => {
+            const expA = getExperienceValue(a.experience);
+            const expB = getExperienceValue(b.experience);
+            return expA - expB; // Lower experience first (entry level first)
+          });
+          break;
+        case 'salary':
+          sorted.sort((a, b) => {
+            const salaryA = getSalaryValue(a.salary_summary);
+            const salaryB = getSalaryValue(b.salary_summary);
+            return salaryB - salaryA; // Higher salary first
           });
           break;
       }
@@ -259,9 +311,9 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
   const virtualizer = useVirtualizer({
     count: processedJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 144, // Initial estimate, will be measured dynamically
+    estimateSize: () => 120, // Initial estimate, will be measured dynamically
     overscan: 5, // Render 5 extra items outside viewport
-    measureElement: (element) => element?.getBoundingClientRect().height ?? 144,
+    measureElement: (element) => element?.getBoundingClientRect().height ?? 120,
   });
 
   // Close on Escape key
@@ -313,7 +365,11 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
         <div className="shrink-0 border-b border-white/10 bg-black/30">
           <div className="flex items-center justify-between px-5 py-4">
             <div>
-              <h2 className="text-[15px] lg:text-[16px] xl:text-[17px] font-medium text-white m-0 tracking-[-0.01em]">All Jobs</h2>
+              <h2 className="text-[15px] lg:text-[16px] xl:text-[17px] font-medium text-white m-0 tracking-[-0.01em]">
+                <Link href="/jobs" className="hover:text-white/80 transition-colors">
+                  All Jobs
+                </Link>
+              </h2>
               <p className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 mt-1 m-0">
                 {processedJobs.length.toLocaleString()} jobs • {companiesCount} companies • {locationsCount} locations
               </p>
@@ -364,6 +420,8 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
                   { value: 'location', label: 'Location' },
                   { value: 'title', label: 'Title' },
                   { value: 'recent', label: 'Recent' },
+                  { value: 'experience', label: 'Experience' },
+                  { value: 'salary', label: 'Salary' },
                 ].map((option) => (
                   <button
                     key={option.value}
@@ -387,7 +445,7 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
         {/* Job List - Virtualized */}
         <div
           ref={parentRef}
-          className="flex-1 overflow-y-auto custom-scrollbar bg-black"
+          className="flex-1 overflow-y-auto bg-black"
         >
           {processedJobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full px-6 text-center py-12">
@@ -446,27 +504,16 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
         {processedJobs.length > 0 && (
           <div className="shrink-0 border-t border-white/10 bg-black/30 px-5 py-3">
             <div className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 text-center">
-              Showing {processedJobs.length.toLocaleString()} of {jobs.length.toLocaleString()} jobs
+              <Link
+                href="/jobs"
+                className="hover:text-white/70 transition-colors"
+              >
+                Showing {processedJobs.length.toLocaleString()} of {jobs.length.toLocaleString()} jobs
+              </Link>
             </div>
           </div>
         )}
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-      `}</style>
     </>
   );
 }

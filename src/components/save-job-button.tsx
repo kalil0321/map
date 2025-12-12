@@ -24,7 +24,7 @@ export function SaveJobButton({ atsId, variant = 'compact', className }: SaveJob
       <button
         onClick={handleClick}
         className={clsx(
-          'p-1 rounded transition-colors duration-200',
+          'transition-colors duration-200',
           saved
             ? 'text-blue-400 hover:text-blue-300'
             : 'text-white/40 hover:text-white/70',
@@ -34,8 +34,8 @@ export function SaveJobButton({ atsId, variant = 'compact', className }: SaveJob
         title={saved ? 'Unsave job' : 'Save job'}
       >
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill={saved ? 'currentColor' : 'none'}
           stroke="currentColor"

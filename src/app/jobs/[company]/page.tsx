@@ -21,6 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
             return {
                 title: 'Company Jobs | Stapply',
                 description: 'Explore jobs at tech companies on Stapply.',
+                keywords: [
+                    'tech jobs',
+                    'tech job alerts',
+                    'tech job notify',
+                    'all companies',
+                    'tech companies',
+                    'tech job search',
+                ],
             };
         }
 
@@ -38,6 +46,16 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
         return {
             title,
             description,
+            keywords: [
+                `${companyName} jobs`,
+                `${companyName} careers`,
+                'tech jobs',
+                'tech job alerts',
+                'tech job notify',
+                'all companies',
+                'tech companies',
+                'tech job search',
+            ],
             openGraph: {
                 title,
                 description,
@@ -66,6 +84,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
         return {
             title: 'Company Jobs | Stapply',
             description: 'Explore jobs at tech companies on Stapply.',
+            keywords: [
+                'tech jobs',
+                'tech job alerts',
+                'tech job notify',
+                'all companies',
+                'tech companies',
+                'tech job search',
+            ],
         };
     }
 }

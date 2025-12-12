@@ -8,7 +8,7 @@ import type { JobMarker } from '@/types';
 import { StatsOverlay } from './stats-overlay';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
 import { generateCompanySlug } from '@/lib/slug-utils';
-import { formatSalary } from '@/utils/salary-format';
+import { formatExperience } from '@/utils/salary-format';
 import { SaveJobButton } from '@/components/save-job-button';
 import { addUtmParams } from '@/utils/url-utils';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -571,16 +571,18 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                   >
                     {popupJob.company}
                   </Link>
-                  {formatSalary(popupJob) && (
-                    <span className="text-[11px] text-green-400/80 font-medium">
-                      {formatSalary(popupJob)}
+                </div>
+
+                <div className="flex items-center gap-2 mb-4 pr-5">
+                  <h3 className="m-0 text-lg font-medium text-white leading-snug h-[50px] overflow-hidden line-clamp-2 wrap-break-word">
+                    {popupJob.title}
+                  </h3>
+                  {formatExperience(popupJob.experience) && (
+                    <span className="text-[12px] text-white/50 shrink-0">
+                      {formatExperience(popupJob.experience)}
                     </span>
                   )}
                 </div>
-
-                <h3 className="m-0 mb-4 text-lg font-medium text-white leading-snug pr-5 h-[50px] overflow-hidden line-clamp-2 wrap-break-word">
-                  {popupJob.title}
-                </h3>
 
                 <div className="text-[13px] text-white/50 mb-3 flex items-center gap-1.5 h-5 overflow-hidden text-ellipsis whitespace-nowrap">
                   <div className="w-1 h-1 rounded-full bg-blue-500 shrink-0" />

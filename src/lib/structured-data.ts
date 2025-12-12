@@ -41,47 +41,20 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
     },
   };
 
-  // Add salary information if available
+  // Add salary and experience information if available
   const salaryFormatted = formatSalary(job);
+  let descriptionParts = [`${job.title} position at ${job.company} in ${job.location}.`];
+
   if (salaryFormatted) {
-    schema.description = `${job.title} position at ${job.company} in ${job.location}. ${salaryFormatted}. Apply now to join our team. Visit Stapply to discover more jobs at tech companies.`;
+    descriptionParts.push(`Salary: ${salaryFormatted}.`);
   }
 
-  // Add baseSalary if we have salary data
-  if (job.salary_min || job.salary_max) {
-    const baseSalary: any = {
-      '@type': 'MonetaryAmount',
-    };
-
-    if (job.salary_currency) {
-      baseSalary.currency = job.salary_currency;
-    } else {
-      baseSalary.currency = 'USD'; // Default
-    }
-
-    if (job.salary_min && job.salary_max) {
-      baseSalary.value = {
-        '@type': 'QuantitativeValue',
-        minValue: parseFloat(job.salary_min),
-        maxValue: parseFloat(job.salary_max),
-        unitText: job.salary_period || 'YEAR',
-      };
-    } else if (job.salary_min) {
-      baseSalary.value = {
-        '@type': 'QuantitativeValue',
-        value: parseFloat(job.salary_min),
-        unitText: job.salary_period || 'YEAR',
-      };
-    } else if (job.salary_max) {
-      baseSalary.value = {
-        '@type': 'QuantitativeValue',
-        value: parseFloat(job.salary_max),
-        unitText: job.salary_period || 'YEAR',
-      };
-    }
-
-    schema.baseSalary = baseSalary;
+  if (job.experience) {
+    descriptionParts.push(`Experience required: ${job.experience}.`);
   }
+
+  descriptionParts.push('Apply now to join our team. Visit Stapply to discover more jobs at tech companies.');
+  schema.description = descriptionParts.join(' ');
 
   return schema;
 }

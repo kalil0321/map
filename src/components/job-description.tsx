@@ -76,6 +76,31 @@ export function JobDescription({ description, className }: JobDescriptionProps) 
               </p>
             );
 
+          case 'salary':
+            const currency = section.salaryCurrency || '$';
+            const min = section.salaryMin || '';
+            const max = section.salaryMax || '';
+
+            // Format with commas: 385000 -> 385,000
+            const formatWithCommas = (num: string) => {
+              return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            };
+
+            const salaryText = min === max
+              ? `${currency}${formatWithCommas(min)}`
+              : `${currency}${formatWithCommas(min)} - ${currency}${formatWithCommas(max)}`;
+
+            return (
+              <div key={index} className="mt-6 mb-3 first:mt-0">
+                <h3 className="text-[16px] md:text-[18px] font-semibold text-white mb-2">
+                  {section.content}
+                </h3>
+                <p className="text-[13px] md:text-[15px] text-white/80">
+                  {salaryText}
+                </p>
+              </div>
+            );
+
           default:
             return null;
         }

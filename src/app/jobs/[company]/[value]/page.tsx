@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
-import { generateCompanySlug, findJobBySlug } from '@/lib/slug-utils';
+import { generateCompanySlug } from '@/lib/slug-utils';
 import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/lib/structured-data';
 import Script from 'next/script';
 import { PageHeader } from '@/components/page-header';
@@ -11,25 +11,62 @@ import { formatJobDate } from '@/utils/date-format';
 import { JobDescription } from '@/components/job-description';
 import { addUtmParams } from '@/utils/url-utils';
 import type { JobMarker } from '@/types';
+import { buildJobIndexCached, findJobBySlugFast } from '@/utils/job-index';
+
+// Enable ISR with 1-hour revalidation
+export const revalidate = 3600;
+
+/**
+ * Generate static params for all job pages at build time
+ * This pre-renders all job pages for optimal performance
+ */
+export async function generateStaticParams() {
+    try {
+        const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
+        const jobIndex = buildJobIndexCached(allJobs);
+
+        // Generate params for all jobs
+        return Array.from(jobIndex.keys()).map(slug => {
+            const [company, value] = slug.split('/');
+            return { company, value };
+        });
+    } catch (error) {
+        console.error('Error generating static params:', error);
+        return [];
+    }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ company: string; value: string }> }): Promise<Metadata> {
     const { company: companySlug, value } = await params;
 
     try {
         const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
+        const jobIndex = buildJobIndexCached(allJobs);
 
-        // Find job by matching the full slug (more reliable than extracting hash)
-        const job = findJobBySlug<JobMarker>(allJobs, companySlug, value);
+        // O(1) lookup using hash index instead of O(n) linear search
+        const job = findJobBySlugFast(jobIndex, companySlug, value);
 
         if (!job) {
             return {
                 title: 'Job Not Found | Stapply',
                 description: 'This job posting could not be found.',
+                keywords: [
+                    'tech jobs',
+                    'tech job alerts',
+                    'tech job notify',
+                    'all companies',
+                    'tech companies',
+                    'tech job search',
+                ],
             };
         }
 
-        const salaryInfo = formatSalary(job);
-        const dbDetails = await fetchJobDetailsFromDb(job.ats_id, job.url);
+        // Parallelize salary formatting and DB query since they're independent
+        const [salaryInfo, dbDetails] = await Promise.all([
+            Promise.resolve(formatSalary(job)),
+            fetchJobDetailsFromDb(job.ats_id, job.url),
+        ]);
+
         const descriptionText = (dbDetails?.description ?? job.description ?? '').replace(/\s+/g, ' ').trim();
         const descriptionSnippet =
             descriptionText.length > 220 ? `${descriptionText.slice(0, 220).trimEnd()}...` : descriptionText;
@@ -44,6 +81,17 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
         return {
             title,
             description,
+            keywords: [
+                `${job.title} jobs`,
+                `${job.company} jobs`,
+                'tech jobs',
+                'tech job alerts',
+                'tech job notify',
+                'all companies',
+                'tech companies',
+                'tech job search',
+                `${job.location} tech jobs`,
+            ],
             openGraph: {
                 title,
                 description,
@@ -72,6 +120,14 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
         return {
             title: 'Job Not Found | Stapply',
             description: 'This job posting could not be found.',
+            keywords: [
+                'tech jobs',
+                'tech job alerts',
+                'tech job notify',
+                'all companies',
+                'tech companies',
+                'tech job search',
+            ],
         };
     }
 }
@@ -80,16 +136,19 @@ export default async function JobPage({ params }: { params: Promise<{ company: s
     const { company: companySlug, value } = await params;
 
     try {
+        // Load CSV data (cached and deduplicated by React cache)
         const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
+        const jobIndex = buildJobIndexCached(allJobs);
 
-        // Find job by matching the full slug (more reliable than extracting hash)
-        const job = findJobBySlug<JobMarker>(allJobs, companySlug, value);
+        // O(1) lookup using hash index instead of O(n) linear search
+        const job = findJobBySlugFast(jobIndex, companySlug, value);
 
         if (!job || !job.url) {
             return <JobNotFound />;
         }
 
-        // Fetch additional job details from database
+        // Fetch additional job details from database (cached and deduplicated by React cache)
+        // This will be automatically deduplicated if called in generateMetadata
         const dbDetails = await fetchJobDetailsFromDb(job.ats_id, job.url);
 
         // Merge database details with job data
@@ -147,16 +206,18 @@ export default async function JobPage({ params }: { params: Promise<{ company: s
                     {/* Job Header */}
                     <div className="flex flex-col gap-6">
                         {/* Title and Apply Button */}
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                            <h1 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] leading-tight">{job.title}</h1>
+                        <div className="flex flex-row items-center gap-3 md:gap-4 justify-between">
+                            <h1 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] leading-tight">
+                                {job.title}
+                            </h1>
                             <Link
                                 href={addUtmParams(job.url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20 shrink-0 self-start"
+                                className="inline-flex items-center gap-1 px-3 py-1 bg-white/8 text-white rounded-full border border-white/12 text-[12px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20 shrink-0 ml-2 md:ml-4"
                             >
-                                Apply Now
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                Apply
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M7 17L17 7" />
                                     <path d="M7 7h10v10" />
                                 </svg>
@@ -241,7 +302,7 @@ function JobNotFound() {
                         </div>
                         <div className="space-y-2">
                             <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">Job Not Found</h1>
-                            <p className="text-white/60 text-[14px] m-0">This job posting could not be found.</p>
+                            <p className="text-white/60 text-[14px] m-0">This job posting could not be found. It may have been deleted or is no longer available. Sorry :(</p>
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

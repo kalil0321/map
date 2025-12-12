@@ -437,8 +437,7 @@ export function JobAlertModal({ isOpen, onClose, jobs }: JobAlertModalProps) {
 
               <div className={clsx(
                 'border border-white/8 rounded-xl',
-                'bg-white/[0.03] max-h-[180px] overflow-y-auto',
-                'custom-scrollbar'
+                'bg-white/[0.03] max-h-[180px] overflow-y-auto'
               )}>
                 {filteredCompanies.length === 0 ? (
                   <div className="p-4 text-center text-white/40 text-[12px]">
@@ -501,8 +500,7 @@ export function JobAlertModal({ isOpen, onClose, jobs }: JobAlertModalProps) {
 
               <div className={clsx(
                 'border border-white/8 rounded-xl',
-                'bg-white/[0.03] max-h-[180px] overflow-y-auto',
-                'custom-scrollbar'
+                'bg-white/[0.03] max-h-[180px] overflow-y-auto'
               )}>
                 {filteredLocations.length === 0 ? (
                   <div className="p-4 text-center text-white/40 text-[12px]">
@@ -596,23 +594,6 @@ export function JobAlertModal({ isOpen, onClose, jobs }: JobAlertModalProps) {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-      `}</style>
     </div>
   );
 }

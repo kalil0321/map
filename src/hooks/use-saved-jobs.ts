@@ -14,6 +14,7 @@ export interface UseSavedJobsReturn {
   saveJob: (atsId: string) => void;
   unsaveJob: (atsId: string) => void;
   clearAll: () => void;
+  isLoading: boolean;
 }
 
 /**
@@ -23,10 +24,12 @@ export interface UseSavedJobsReturn {
  */
 export function useSavedJobs(): UseSavedJobsReturn {
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize from localStorage on mount
   useEffect(() => {
     setSavedJobIds(getSavedJobIds());
+    setIsLoading(false);
   }, []);
 
   // Sync with localStorage changes from other tabs
@@ -81,5 +84,6 @@ export function useSavedJobs(): UseSavedJobsReturn {
     saveJob,
     unsaveJob,
     clearAll,
+    isLoading,
   };
 }

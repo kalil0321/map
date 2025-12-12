@@ -146,16 +146,18 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
 
   if (!isOpen) return null;
 
+  const activeFilterCount = selectedCompanies.size + selectedLocations.size + (postedWithin !== null ? 1 : 0) + (localSearchText ? 1 : 0);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
         className={clsx(
-          'bg-black backdrop-blur-2xl',
+          'bg-black/50 backdrop-blur-2xl',
           'border border-white/10 rounded-2xl',
-          'w-[90vw] max-w-[900px] max-h-[80vh]',
+          'w-full max-w-[900px] max-h-[85vh]',
           'text-white font-[system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif]',
           'flex flex-col',
           'shadow-[0_8px_32px_rgba(0,0,0,0.8)]'
@@ -163,8 +165,10 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-black/30">
-          <h2 className="text-[15px] font-medium m-0 tracking-[-0.01em]">Filter Jobs</h2>
+        <div className="flex items-center justify-between px-5 pt-4">
+          <div>
+            <h2 className="text-[15px] font-medium m-0 tracking-[-0.01em]">Filter Jobs</h2>
+          </div>
           <button
             onClick={onClose}
             className={clsx(
@@ -174,13 +178,14 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
               'transition-all duration-150',
               'hover:bg-white/10 hover:text-white/80'
             )}
+            aria-label="Close"
           >
             ×
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 bg-black">
+        <div className="flex-1 overflow-y-auto p-5">
           {/* General Search */}
           <div className="mb-5">
             <label className="block text-[11px] font-medium text-white/50 mb-2">
@@ -190,7 +195,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
               className={clsx(
                 'bg-white/8 rounded-xl border border-white/12 overflow-hidden',
                 'transition-all duration-200',
-                'focus-within:border-blue-500/50 focus-within:bg-white/10'
+                'focus-within:border-white/20 focus-within:bg-white/10'
               )}
             >
               <input
@@ -207,7 +212,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
             </div>
           </div>
 
-          {/* Age */}
+          {/* Age Filter */}
           <div className="mb-5">
             <label className="block text-[11px] font-medium text-white/50 mb-2">
               Posted within
@@ -226,7 +231,7 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
                     'px-[10px] py-1 rounded-full text-[11px] font-medium',
                     'transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer',
                     postedWithin === option.value
-                      ? 'bg-white/12 border border-white/20 text-white'
+                      ? 'bg-blue-500/20 border border-blue-500/50 text-blue-400'
                       : 'bg-white/8 border border-white/12 text-white/70 hover:bg-white/12 hover:border-white/20'
                   )}
                 >
@@ -236,79 +241,41 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
             </div>
           </div>
 
+          {/* Companies & Locations Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Companies */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-medium text-white/50">
-                  Companies ({selectedCompanies.size} selected)
-                </label>
-                <button
-                  onClick={handleSelectAllCompanies}
-                  className={clsx(
-                    'text-[11px] text-white/70 border-none bg-transparent cursor-pointer',
-                    'transition-colors duration-200',
-                    'hover:text-white'
-                  )}
-                >
-                  {selectedCompanies.size === filteredCompanies.length ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
-
-              <div
-                className={clsx(
-                  'bg-white/8 rounded-xl border border-white/12 overflow-hidden mb-2',
-                  'transition-all duration-200',
-                  'focus-within:border-blue-500/50 focus-within:bg-white/10'
+              <label className="block text-[13px] font-medium text-white/70 mb-2">
+                Companies {selectedCompanies.size > 0 && (
+                  <span className="text-white/50">({selectedCompanies.size} selected)</span>
                 )}
-              >
-                <input
-                  type="text"
-                  placeholder="Search companies..."
-                  value={companySearchText}
-                  onChange={(e) => setCompanySearchText(e.target.value)}
-                  className={clsx(
-                    'w-full px-3 py-2',
-                    'bg-transparent border-none text-white text-[13px] outline-none',
-                    'placeholder:text-white/40'
-                  )}
-                />
-              </div>
-
-              <div className={clsx(
-                'border border-white/10 rounded-lg',
-                'bg-white/5 max-h-[300px] overflow-y-auto',
-                'custom-scrollbar'
-              )}>
+              </label>
+              <input
+                type="text"
+                value={companySearchText}
+                onChange={(e) => setCompanySearchText(e.target.value)}
+                placeholder="Search and select companies..."
+                className="w-full px-4 py-2.5 bg-white/8 rounded-xl border border-white/12 text-white text-[13px] outline-none placeholder:text-white/40 focus:border-blue-500/50 focus:bg-white/10 transition-all mb-2"
+              />
+              <div className="h-[200px] overflow-y-auto overscroll-contain space-y-1 border border-white/8 rounded-xl p-2">
                 {filteredCompanies.length === 0 ? (
                   <div className="p-4 text-center text-white/40 text-[13px]">
                     No companies found
                   </div>
                 ) : (
                   filteredCompanies.map((company) => (
-                    <label
+                    <button
                       key={company}
+                      onClick={() => handleCompanyToggle(company)}
                       className={clsx(
-                        'flex items-center gap-2.5 px-3 py-2',
-                        'cursor-pointer transition-colors duration-150',
-                        'hover:bg-white/10',
-                        'border-b border-white/5 last:border-b-0'
+                        'w-full text-left px-3 py-1.5 rounded-lg text-[12px] transition-all uppercase',
+                        selectedCompanies.has(company)
+                          ? 'bg-blue-500/10 text-blue-400'
+                          : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                       )}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedCompanies.has(company)}
-                        onChange={() => handleCompanyToggle(company)}
-                        className={clsx(
-                          'w-3.5 h-3.5 rounded',
-                          'bg-white/10 border border-white/30',
-                          'checked:bg-blue-500 checked:border-blue-500',
-                          'focus:outline-none focus:ring-2 focus:ring-blue-500/50',
-                          'cursor-pointer transition-all'
-                        )}
-                      />
-                      <span className="text-[13px] text-white/90">{company}</span>
-                    </label>
+                      {company}
+                    </button>
                   ))
                 )}
               </div>
@@ -316,76 +283,37 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
 
             {/* Locations */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-medium text-white/50">
-                  Locations ({selectedLocations.size} selected)
-                </label>
-                <button
-                  onClick={handleSelectAllLocations}
-                  className={clsx(
-                    'text-[11px] text-white/70 border-none bg-transparent cursor-pointer',
-                    'transition-colors duration-200',
-                    'hover:text-white'
-                  )}
-                >
-                  {selectedLocations.size === filteredLocations.length ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
-
-              <div
-                className={clsx(
-                  'bg-white/8 rounded-xl border border-white/12 overflow-hidden mb-2',
-                  'transition-all duration-200',
-                  'focus-within:border-blue-500/50 focus-within:bg-white/10'
+              <label className="block text-[13px] font-medium text-white/70 mb-2">
+                Locations {selectedLocations.size > 0 && (
+                  <span className="text-white/50">({selectedLocations.size} selected)</span>
                 )}
-              >
-                <input
-                  type="text"
-                  placeholder="Search locations..."
-                  value={locationSearchText}
-                  onChange={(e) => setLocationSearchText(e.target.value)}
-                  className={clsx(
-                    'w-full px-3 py-2',
-                    'bg-transparent border-none text-white text-[13px] outline-none',
-                    'placeholder:text-white/40'
-                  )}
-                />
-              </div>
-
-              <div className={clsx(
-                'border border-white/10 rounded-lg',
-                'bg-white/5 max-h-[300px] overflow-y-auto',
-                'custom-scrollbar'
-              )}>
+              </label>
+              <input
+                type="text"
+                value={locationSearchText}
+                onChange={(e) => setLocationSearchText(e.target.value)}
+                placeholder="Search and select locations..."
+                className="w-full px-4 py-2.5 bg-white/8 rounded-xl border border-white/12 text-white text-[13px] outline-none placeholder:text-white/40 focus:border-blue-500/50 focus:bg-white/10 transition-all mb-2"
+              />
+              <div className="h-[200px] overflow-y-auto overscroll-contain space-y-1 border border-white/8 rounded-xl p-2">
                 {filteredLocations.length === 0 ? (
                   <div className="p-4 text-center text-white/40 text-[13px]">
                     No locations found
                   </div>
                 ) : (
                   filteredLocations.map((location) => (
-                    <label
+                    <button
                       key={location}
+                      onClick={() => handleLocationToggle(location)}
                       className={clsx(
-                        'flex items-center gap-2.5 px-3 py-2',
-                        'cursor-pointer transition-colors duration-150',
-                        'hover:bg-white/10',
-                        'border-b border-white/5 last:border-b-0'
+                        'w-full text-left px-3 py-1.5 rounded-lg text-[12px] transition-all',
+                        selectedLocations.has(location)
+                          ? 'bg-blue-500/10 text-blue-400'
+                          : 'text-white/60 hover:bg-white/5 hover:text-white/80'
                       )}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedLocations.has(location)}
-                        onChange={() => handleLocationToggle(location)}
-                        className={clsx(
-                          'w-3.5 h-3.5 rounded',
-                          'bg-white/10 border border-white/30',
-                          'checked:bg-blue-500 checked:border-blue-500',
-                          'focus:outline-none focus:ring-2 focus:ring-blue-500/50',
-                          'cursor-pointer transition-all'
-                        )}
-                      />
-                      <span className="text-[13px] text-white/90">{location}</span>
-                    </label>
+                      {location}
+                    </button>
                   ))
                 )}
               </div>
@@ -394,14 +322,14 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-4 px-5 py-4 border-t border-white/10 bg-black/30">
+        <div className="flex items-center justify-between gap-4 px-5 pb-4">
           <button
             onClick={handleReset}
             className={clsx(
               'px-[10px] py-1 rounded-full',
-              'bg-white/8 border border-white/12',
-              'text-white text-[11px] font-medium',
-              'hover:bg-white/12 hover:border-white/20 transition-[border-color,background-color] duration-200 cursor-pointer'
+              'bg-red-500/20 border border-red-500/50',
+              'text-red-400 text-[11px] font-medium',
+              'hover:bg-red-500/30 hover:border-red-500/60 transition-[border-color,background-color] duration-200 cursor-pointer'
             )}
           >
             Reset All
@@ -421,10 +349,10 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
             <button
               onClick={handleApply}
               className={clsx(
-                'px-[10px] py-1 rounded-full',
-                'bg-white/12 border border-white/20',
-                'text-white text-[11px] font-medium',
-                'hover:bg-white/16 hover:border-white/30 transition-[border-color,background-color] duration-200 cursor-pointer'
+                'px-[10px] py-1 rounded-full text-[11px] font-medium',
+                'bg-blue-500/20 border border-blue-500/50 text-blue-400',
+                'hover:bg-blue-500/30 hover:border-blue-500/60',
+                'transition-[border-color,background-color] duration-200 cursor-pointer'
               )}
             >
               Apply Filters
@@ -432,23 +360,6 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, searchText
           </div>
         </div>
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-      `}</style>
     </div>
   );
 }

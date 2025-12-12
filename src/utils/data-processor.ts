@@ -44,15 +44,16 @@ export async function loadJobsWithCoordinates(filePath: string): Promise<JobMark
               location: String(row.location || ''),
               company: String(row.company || ''),
               ats_id: String(row.ats_id || ''),
-              id: String(row.id || ''),
+              // fall back to ats_id/url so every job has a stable id for deduping/keys
+              id: String(row.id || row.ats_id || row.url || ''),
               lat,
               lng,
-              salary_min: row.salary_min ? String(row.salary_min) : null,
-              salary_max: row.salary_max ? String(row.salary_max) : null,
               salary_currency: row.salary_currency ? String(row.salary_currency) : null,
               salary_period: row.salary_period ? String(row.salary_period) : null,
               salary_summary: row.salary_summary ? String(row.salary_summary) : null,
+              experience: row.experience ? String(row.experience) : null,
               posted_at: row.posted_at ? String(row.posted_at) : null,
+              ats_type: row.ats_type ? String(row.ats_type) : null,
             };
 
             return marker;
@@ -67,19 +68,46 @@ export async function loadJobsWithCoordinates(filePath: string): Promise<JobMark
             return isValid;
           });
 
+        const dedupedMarkers = dedupeJobs(markers);
+
         console.log(`Parsed ${markers.length} markers with valid coordinates from ${results.data.length} rows`);
-        if (markers.length > 0) {
-          console.log('Sample marker:', markers[0]);
+        console.log(`Deduped to ${dedupedMarkers.length} unique jobs (keyed by ats_id/id/url)`);
+        if (dedupedMarkers.length > 0) {
+          console.log('Sample marker:', dedupedMarkers[0]);
         } else {
           console.error('No valid markers found! Sample row:', results.data[0]);
         }
-        resolve(markers);
+        resolve(dedupedMarkers);
       },
       error: (error: Error) => {
         reject(error);
       },
     });
   });
+}
+
+function dedupeJobs(markers: JobMarker[]): JobMarker[] {
+  const byKey = new Map<string, JobMarker>();
+
+  markers.forEach((marker) => {
+    const key = marker.ats_id || marker.id || marker.url || `${marker.company}-${marker.title}-${marker.location}`;
+    const existing = byKey.get(key);
+
+    if (!existing) {
+      byKey.set(key, marker);
+      return;
+    }
+
+    // Prefer the entry with the latest posted_at date if available
+    const existingDate = existing.posted_at ? Date.parse(existing.posted_at) : Number.NEGATIVE_INFINITY;
+    const candidateDate = marker.posted_at ? Date.parse(marker.posted_at) : Number.NEGATIVE_INFINITY;
+
+    if (candidateDate > existingDate) {
+      byKey.set(key, marker);
+    }
+  });
+
+  return Array.from(byKey.values());
 }
 
 

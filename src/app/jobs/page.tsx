@@ -8,6 +8,33 @@ import { AllJobsList } from '@/components/all-jobs-list';
 export const metadata: Metadata = {
   title: 'Jobs at Tech Companies Worldwide | Stapply',
   description: 'Browse all tech companies and job openings on Stapply.',
+  keywords: [
+    'tech jobs',
+    'all companies',
+    'tech job search',
+    'tech job alerts',
+    'tech job notify',
+    'AI jobs',
+    'software engineering jobs',
+    'tech company jobs',
+    'job search',
+    'tech careers',
+    'remote tech jobs',
+    'tech job finder',
+    'all tech companies',
+    'tech job directory',
+  ],
+  openGraph: {
+    title: 'Jobs at Tech Companies Worldwide | Stapply',
+    description: 'Browse all tech companies and job openings on Stapply.',
+    type: 'website',
+    url: 'https://map.stapply.ai/jobs',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Jobs at Tech Companies Worldwide | Stapply',
+    description: 'Browse all tech companies and job openings on Stapply.',
+  },
 };
 
 export default async function JobsDirectoryPage() {

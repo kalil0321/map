@@ -10,11 +10,10 @@ export interface Job {
 export interface JobMarker extends Job {
   lat: number;
   lng: number;
-  salary_min?: string | null;
-  salary_max?: string | null;
   salary_currency?: string | null;
   salary_period?: string | null;
   salary_summary?: string | null;
+  experience?: string | null;
   posted_at?: string | null;
   description?: string | null;
   ats_type?: string | null;

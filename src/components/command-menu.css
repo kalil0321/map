@@ -1,0 +1,146 @@
+.command-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.command-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.command-menu-container {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  background-color: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+/* Command root */
+[cmdk-root] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Input */
+[cmdk-input] {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+[cmdk-input]::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* List */
+[cmdk-list] {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0;
+}
+
+/* Group */
+[cmdk-group] {
+  padding: 0;
+}
+
+[cmdk-group-heading] {
+  padding: 0.5rem 1rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Item */
+[cmdk-item] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  color: rgba(255, 255, 255, 0.7);
+  transition: background-color 150ms, color 150ms;
+}
+
+[cmdk-item] a {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+[cmdk-item][aria-selected='true'] {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+[cmdk-item]:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.command-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.command-item-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.command-item-description {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.125rem;
+}
+
+/* Empty */
+[cmdk-empty] {
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Scrollbar styling */
+[cmdk-list]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[cmdk-list]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[cmdk-list]::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+[cmdk-list]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}

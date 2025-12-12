@@ -6,7 +6,7 @@ import { useQueryState, parseAsInteger } from 'nuqs';
 import clsx from 'clsx';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
-import { formatSalary } from '@/utils/salary-format';
+import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { formatJobDate } from '@/utils/date-format';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SaveJobButton } from '@/components/save-job-button';
@@ -16,7 +16,7 @@ import type { JobMarker } from '@/types';
 
 type Job = JobMarker;
 
-type SortOption = 'location' | 'title' | 'company' | 'recent';
+type SortOption = 'location' | 'title' | 'company' | 'recent' | 'experience' | 'salary';
 
 interface AllJobsListProps {
     jobs: Job[];
@@ -40,6 +40,60 @@ function normalizeForCompare(str: string): string {
 // Compare two strings using normalized values
 function compareStrings(a: string, b: string): number {
     return normalizeForCompare(a).localeCompare(normalizeForCompare(b), undefined, { sensitivity: 'base' });
+}
+
+// Extract numeric value from experience string for sorting (e.g., "3-5 years" -> 3, "5 years" -> 5)
+function getExperienceValue(experience: string | null | undefined): number {
+    if (!experience) return Infinity; // Jobs without experience go to the end
+    const numberMatch = experience.match(/\d+/);
+    return numberMatch ? parseInt(numberMatch[0], 10) : Infinity;
+}
+
+// Extract numeric value from salary_summary for sorting
+// Returns an object with value and isRange flag for proper sorting
+function getSalaryValue(salarySummary: string | null | undefined): number {
+    if (!salarySummary) return -1; // Jobs without salary go to the end (negative so they sort last)
+
+    // Remove currency symbols for comparison
+    const normalized = salarySummary.replace(/[$€£¥₹]/g, '');
+
+    // Try to extract from dict format: {'unit': 'USD', 'amount': '140900.0'}
+    const dictAmountMatch = normalized.match(/'amount':\s*['"]([^'"]+)['"]|"amount":\s*['"]([^'"]+)['"]/i);
+    if (dictAmountMatch) {
+        const amount = parseFloat(dictAmountMatch[1] || dictAmountMatch[2] || '');
+        // Treat dict as single value - add 0.5 to sort after ranges
+        if (!isNaN(amount)) return amount + 0.5;
+    }
+
+    // Try to extract from range format: "145,000-175,000" or "145K-175K"
+    const rangeMatch = normalized.match(/([\d,]+)\s*K?\s*[-–—]\s*([\d,]+)\s*K?/i);
+    if (rangeMatch) {
+        let min = parseFloat(rangeMatch[1].replace(/,/g, ''));
+        // Multiply by 1000 if K suffix is present
+        if (/K/i.test(rangeMatch[0])) {
+            min = min * 1000;
+        }
+        if (!isNaN(min)) {
+            // Use min value for ranges so they sort by lower bound
+            // Ranges come before single values at same min (no offset)
+            return min;
+        }
+    }
+
+    // Try to extract single value: "130900" or "130,900" or "145K"
+    const singleMatch = normalized.match(/([\d,]+)\s*K?/i);
+    if (singleMatch) {
+        let amount = parseFloat(singleMatch[1].replace(/,/g, ''));
+        // Multiply by 1000 if K suffix is present
+        if (/K/i.test(singleMatch[0])) {
+            amount = amount * 1000;
+        }
+        // Add 0.5 to single values so they sort after ranges with same min
+        // e.g., "145K-175K" (145000) comes before "145K" (145000.5)
+        if (!isNaN(amount)) return amount + 0.5;
+    }
+
+    return -1; // Could not parse, put at end
 }
 
 // Parse search text to extract special syntax
@@ -207,6 +261,20 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                     return timestampB - timestampA; // Newest first
                 });
                 break;
+            case 'experience':
+                sorted.sort((a, b) => {
+                    const expA = getExperienceValue(a.experience);
+                    const expB = getExperienceValue(b.experience);
+                    return expA - expB; // Lower experience first (entry level first)
+                });
+                break;
+            case 'salary':
+                sorted.sort((a, b) => {
+                    const salaryA = getSalaryValue(a.salary_summary);
+                    const salaryB = getSalaryValue(b.salary_summary);
+                    return salaryB - salaryA; // Higher salary first
+                });
+                break;
             case 'title':
             default:
                 sorted.sort((a, b) => compareStrings(a.title, b.title));
@@ -315,6 +383,8 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                 { value: 'company', label: 'Company' },
                                 { value: 'location', label: 'Location' },
                                 { value: 'recent', label: 'Recent' },
+                                { value: 'experience', label: 'Experience' },
+                                { value: 'salary', label: 'Salary' },
                             ].map((option) => (
                                 <button
                                     key={option.value}
@@ -349,7 +419,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
             {/* Job List */}
             <div
                 ref={parentRef}
-                className="h-[600px] overflow-y-auto custom-scrollbar relative"
+                className="h-[600px] overflow-y-auto relative"
             >
                 {isPending ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center py-12 px-6 text-center">
@@ -409,24 +479,35 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                 >
                                     {/* Title and Age Badge */}
                                     <div className="flex items-start justify-between gap-2 mb-1">
-                                        <Link
-                                            href={`/jobs/${slug}`}
-                                            className="text-[14px] md:text-[16px] font-medium text-white leading-normal m-0 no-underline hover:text-blue-400 transition-colors block flex-1"
-                                        >
-                                            {job.title}
-                                        </Link>
-                                        {formattedDate && (
-                                            <span
-                                                className={clsx(
-                                                    'text-[10px] md:text-[11px] font-medium rounded-full px-[6px] py-0.5 border shrink-0',
-                                                    formattedDate === 'New'
-                                                        ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                                        : 'bg-white/8 text-white/70 border-white/12'
-                                                )}
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <Link
+                                                href={`/jobs/${slug}`}
+                                                prefetch={true}
+                                                className="text-[14px] md:text-[16px] font-medium text-white leading-normal m-0 no-underline hover:text-blue-400 transition-colors block"
                                             >
-                                                {formattedDate}
-                                            </span>
-                                        )}
+                                                {job.title}
+                                            </Link>
+                                            {formatExperience(job.experience) && (
+                                                <span className="text-[12px] md:text-[13px] text-white/50 shrink-0">
+                                                    {formatExperience(job.experience)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            {formattedDate && (
+                                                <span
+                                                    className={clsx(
+                                                        'text-[10px] md:text-[11px] font-medium rounded-full px-[6px] py-0.5 border',
+                                                        formattedDate === 'New'
+                                                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                            : 'bg-white/8 text-white/70 border-white/12'
+                                                    )}
+                                                >
+                                                    {formattedDate}
+                                                </span>
+                                            )}
+                                            <SaveJobButton atsId={job.ats_id} variant="icon" />
+                                        </div>
                                     </div>
 
                                     {/* Company */}
@@ -434,7 +515,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                         <div className="text-[13px] md:text-[15px] text-white/70 mb-1.5">
                                             <Link
                                                 href={`/jobs/${generateCompanySlug(job.company)}`}
-                                                className="no-underline hover:text-white transition-colors"
+                                                className="no-underline hover:text-white transition-colors uppercase"
                                             >
                                                 {job.company}
                                             </Link>
@@ -442,7 +523,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                     )}
 
                                     {/* Location and Salary */}
-                                    <div className="flex items-center gap-2 text-[10px] md:text-[15px] text-white/60 mb-2 flex-wrap">
+                                    <div className="flex items-center gap-2 text-[12px] md:text-[15px] text-white/60 mb-2 flex-wrap">
                                         <div className="flex items-center gap-1">
                                             <svg
                                                 width="12"
@@ -469,10 +550,11 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
 
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
-                                        <SaveJobButton atsId={job.ats_id} variant="compact" />
                                         <Link
                                             href={addUtmParams(job.url)}
-                                            className="items-center gap-1 px-[10px] py-0.5 bg-white/8 text-white no-underline rounded-full text-[11px] md:text-[12px] font-medium border border-white/12 transition-[border-color,background-color] duration-200 ease-in-out hover:bg-white/12 hover:border-white/20 hidden"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-[10px] py-0.5 bg-white/8 text-white no-underline rounded-full text-[11px] md:text-[12px] font-medium border border-white/12 transition-[border-color,background-color] duration-200 ease-in-out hover:bg-white/12 hover:border-white/20"
                                         >
                                             View Job
                                             <svg
@@ -490,29 +572,13 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                             </svg>
                                         </Link>
                                     </div>
+
                                 </div>
                             );
                         })}
                     </div>
                 )}
             </div>
-
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                }
-            `}</style>
         </div>
     );
 }
