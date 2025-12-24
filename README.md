@@ -2,6 +2,8 @@
   <img src="./assets/banner.svg" alt="Stapply Map Banner" width="100%" />
 </div>
 
+--------
+
 A dark-mode interactive map for exploring job opportunities from tech companies worldwide. Built with **Next.js**, **React**, **TypeScript**, and **Mapbox GL**.
 
 It helps you discover jobs from leading tech companies like OpenAI, Anthropic, Google, Apple, Microsoft, and more. Filter by location, company, and job title with filters or discuss with the built-in assistant.
