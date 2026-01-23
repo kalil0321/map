@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" fill="none">
+  <!-- Google Fonts import for Fredoka -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&amp;display=swap');
+    </style>
+  </defs>
+  
+  <!-- Dark background -->
+  <rect width="1200" height="300" fill="#0a0a0a"/>
+  
+  <!-- Logo -->
+  <g transform="translate(80, 115)">
+    <rect x="0" y="20" width="50" height="58" rx="7" fill="#3b82f6" opacity="0.25"/>
+    <rect x="3" y="17" width="50" height="58" rx="7" fill="#3b82f6" opacity="0.65"/>
+    <rect x="6" y="14" width="50" height="58" rx="7" fill="#2563eb"/>
+    <rect x="13" y="21" width="36" height="11" rx="3.5" fill="#ffffff"/>
+    <line x1="13" y1="37" x2="49" y2="37" stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.8"/>
+    <line x1="13" y1="44" x2="43" y2="44" stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.8"/>
+    <line x1="13" y1="51" x2="47" y2="51" stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.8"/>
+  </g>
+  
+  <!-- Main Title -->
+  <text x="170" y="165" font-family="'Fredoka', sans-serif" font-size="64" font-weight="400" fill="#ffffff" letter-spacing="-1" dominant-baseline="middle">
+    Stapply Map
+  </text>
+  
+  <!-- Bottom accent -->
+  <rect x="80" y="245" width="140" height="3" rx="1.5" fill="#3b82f6" opacity="0.5"/>
+</svg>

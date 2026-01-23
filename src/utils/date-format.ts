@@ -1,0 +1,106 @@
+import type { JobMarker } from '@/types';
+
+/**
+ * Format job posting date for display
+ * Returns "New" if posted today or yesterday, or time elapsed (days/weeks/months/years)
+ */
+export function formatJobDate(job: JobMarker): string | null {
+    if (!job.posted_at) {
+        return null;
+    }
+
+    try {
+        const postedDate = new Date(job.posted_at);
+
+        // Check if date is valid
+        if (isNaN(postedDate.getTime())) {
+            return null;
+        }
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const postedDay = new Date(postedDate.getFullYear(), postedDate.getMonth(), postedDate.getDate());
+
+        // Calculate difference in milliseconds
+        const diffMs = today.getTime() - postedDay.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        // Posted today or yesterday - show as "New"
+        if (diffDays === 0 || diffDays === 1) {
+            return 'New';
+        }
+
+        // Less than 7 days
+        if (diffDays < 7) {
+            return `${diffDays}d`;
+        }
+
+        // Less than 4 weeks
+        const diffWeeks = Math.floor(diffDays / 7);
+        if (diffWeeks <= 4) {
+            return `${diffWeeks}w`;
+        }
+
+        // 4 weeks to 12 months - show in months
+        const diffMonths = Math.floor(diffDays / 30);
+        if (diffMonths < 12) {
+            return `${diffMonths}m`;
+        }
+
+        // 12 months or more
+        return '+1y';
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Check if job was posted today or yesterday (is "new")
+ */
+export function isJobNew(job: JobMarker): boolean {
+    if (!job.posted_at) {
+        return false;
+    }
+
+    try {
+        const postedDate = new Date(job.posted_at);
+
+        if (isNaN(postedDate.getTime())) {
+            return false;
+        }
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const postedDay = new Date(postedDate.getFullYear(), postedDate.getMonth(), postedDate.getDate());
+
+        // Calculate difference in milliseconds
+        const diffMs = today.getTime() - postedDay.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        return diffDays === 0 || diffDays === 1;
+    } catch (error) {
+        return false;
+    }
+}
+
+/**
+ * Get parsed date for sorting
+ */
+export function getJobDate(job: JobMarker): Date | null {
+    if (!job.posted_at) {
+        return null;
+    }
+
+    try {
+        const postedDate = new Date(job.posted_at);
+
+        if (isNaN(postedDate.getTime())) {
+            return null;
+        }
+
+        return postedDate;
+    } catch (error) {
+        return null;
+    }
+}
+

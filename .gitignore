@@ -1,0 +1,9 @@
+.vercel
+.next
+sample_md.txt
+private-*
+.env
+.env.local
+todo.txt
+node_modules
+.DS_Store

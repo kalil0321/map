@@ -1,0 +1,1084 @@
+{
+  "generatedAt": "2026-01-23T13:34:06.528Z",
+  "minThreshold": 4,
+  "totalInternshipJobs": 2821,
+  "qualifyingCompanyCount": 39,
+  "companies": [
+    {
+      "company": "TikTok",
+      "companySlug": "tiktok",
+      "internshipCount": 960,
+      "locations": [
+        "Singapore, Singapore",
+        "Tokyo, Japan",
+        "London, United Kingdom",
+        "Jakarta, Indonesia",
+        "Bangkok, Thailand",
+        "Seattle, United States of America",
+        "New York, United States of America",
+        "San Jose, United States of America",
+        "Los Angeles, United States of America",
+        "Seoul, Korea, Republic of",
+        "Dubai, United Arab Emirates",
+        "Warsaw, Poland",
+        "Mexico City, Mexico",
+        "Sao Paulo, Brazil",
+        "Milan, Italy",
+        "Madrid, Spain",
+        "Ho Chi Minh City, Vietnam",
+        "Paris, France",
+        "Amsterdam, Netherlands",
+        "Munich, Germany",
+        "Sydney, Australia",
+        "Yogyakarta, Indonesia",
+        "Dublin, Ireland",
+        "Istanbul, Turkey",
+        "Jakarta Utara, Indonesia",
+        "Kuala Lumpur, Malaysia",
+        "Hamar, Norway",
+        "Berlin, Germany",
+        "Chon Buri, Thailand",
+        "Stockholm, Sweden",
+        "Lisbon, Portugal"
+      ],
+      "sampleTitles": [
+        "Full-Stack Engineer Intern (Mobile Experience Platform) - 2026 Start (BS/MS)",
+        "Mass Account Incubation Project Intern (TikTok Shop) - 2026 Start (BS/MS)",
+        "Algorithm Engineer Intern (TikTok LBS Singapore) - 2026 Start (BS/MS)",
+        "Talent Acquisition Partner Intern (Product & Design) - 2026 Summer (BS/MS)",
+        "Talent Acquisition Project Intern (E-Commerce) - 2026 Start (BS/MS)"
+      ]
+    },
+    {
+      "company": "Amazon",
+      "companySlug": "amazon",
+      "internshipCount": 445,
+      "locations": [
+        "GB, London",
+        "US, CA, Sunnyvale",
+        "IN, HR, Gurugram",
+        "RO, Bucharest",
+        "PL, Gdansk",
+        "IT, Milan",
+        "AE, Dubai",
+        "TW, TPE, Taipei",
+        "ES, Madrid",
+        "LU, Luxembourg",
+        "RO, Iasi",
+        "US, CA, Pasadena",
+        "AU, NSW, Sydney",
+        "CA, BC, Vancouver",
+        "US, MA, Westboro",
+        "US, WA, Seattle",
+        "US, TX, Austin",
+        "US, CA, Culver City",
+        "MX, DIF, Mexico City",
+        "US, TX, Dallas",
+        "DE, BY, Munich",
+        "DE, RP, Frankenthal",
+        "GB, Haydock",
+        "IT, MI, Milan",
+        "AU, VIC, Melbourne",
+        "SG, Singapore",
+        "BE, Brussels",
+        "GB, POST-LON, London",
+        "IN, KA, Bengaluru",
+        "US, MA, N.reading",
+        "US, NM, Los Lunas",
+        "US, LA, Baton Rouge",
+        "US, PA, Breinigsville",
+        "US, ND, Fargo",
+        "CA, AB, Acheson",
+        "US, VA, Arlington",
+        "US, HI, Honolulu",
+        "BR, Virtual",
+        "US, GA, Stone Mountain",
+        "DE, BE, Berlin",
+        "DE, Dresden",
+        "SA, Riyadh",
+        "SA, Dammam",
+        "ES, M, Madrid",
+        "IT, TP, Torrazza",
+        "SE, Stockholm",
+        "IL, Tel Aviv",
+        "FR, Courbevoie",
+        "US, CA, Cupertino",
+        "CA, ON, Barrhaven",
+        "CN, 44, Shenzhen",
+        "IT, GE, Genova",
+        "JP, 13, Tokyo",
+        "CN, 13, Beijing",
+        "IN, TS, Hyderabad",
+        "CZ, Kojetin",
+        "CZ, Dobroviz",
+        "CZ, Vrskman",
+        "SK, Sered",
+        "US, CA, San Francisco",
+        "DE, BW, Giengen An Der Brenz",
+        "BR, SP, Sao Paulo",
+        "CN, 11, Beijing",
+        "CN, 31, Shanghai",
+        "NL, Den Haag",
+        "GB, Virtual Location - Uk",
+        "DE, HH, Winsen",
+        "DE, RP, Kobern-gondorf",
+        "DE, TH, Gera",
+        "DE, NI, Achim",
+        "DE, SN, Leipzig",
+        "DE, BW, Pforzheim",
+        "DE, NW, Moenchengladbach",
+        "DE, Kaiserslautern",
+        "DE, Grossenkneten",
+        "DE, HE, Bad Hersfeld",
+        "AE, Abu Dhabi",
+        "TR, Istanbul",
+        "IN, KA, Bangalore",
+        "US, NV, Las Vegas",
+        "US, CO, Aurora",
+        "US, MS, Canton",
+        "US, IL, Monee",
+        "US, KS, Kansas City",
+        "DE, HE, Knuellwald",
+        "DE, TH, Erfurt",
+        "DE, Dummerstorf",
+        "FR, Clichy",
+        "US, TX, San Antonio",
+        "US, MA, North Reading",
+        "US, CA, Stockton",
+        "US, WA, Kent",
+        "US, CA, Rialto",
+        "DE, Standortuebergreifend - Virtual",
+        "DE, NI, Emden",
+        "SA, 02, Jeddah",
+        "EG, Cairo",
+        "DE, NI, Lengede",
+        "DE, HE, Friedrichsdorf",
+        "DE, HH, Hamburg",
+        "DE, Ettenheim",
+        "NL, 0600, Rozenburg",
+        "DE, NI, Cloppenburg",
+        "US, NJ, Somerset",
+        "US, TN, Memphis",
+        "US, FL, Jacksonville",
+        "ES, Illescas",
+        "PL, Lodz",
+        "US, MD, Baltimore",
+        "US, PA, Hamburg",
+        "ES, Figueres",
+        "GB, Doncaster",
+        "IT, AN, Jesi",
+        "US, TX, Fort Worth",
+        "ES, San Fernando De Henares",
+        "US, OH, Euclid",
+        "US, MA, Charlton",
+        "DE, Gattendorf",
+        "US, IN, Whitestown",
+        "GB, POST-TWR, Newcastle",
+        "DE, Contwig",
+        "AT, Vienna",
+        "US, NJ, Robbinsville",
+        "US, KY, Hebron",
+        "PL, Bielany Wroclawskie",
+        "US, NC, Charlotte",
+        "US, CA, Victorville",
+        "US, CA, Perris",
+        "US, CA, Manteca",
+        "US, FL, Jupiter",
+        "US, PA, Jessup",
+        "US, MD, Hagerstown",
+        "US, NJ, Cranbury",
+        "US, TX, Coppell",
+        "US, TN, Nashville",
+        "US, CA, San Diego",
+        "BR, RJ, Belford Roxo",
+        "US, IL, Romeoville",
+        "US, AZ, Tucson",
+        "BR, RJ, Rio De Janeiro",
+        "BR, SP, Cajamar",
+        "BR, PE, Cabo De Santo Agostinho",
+        "ZA, Cape Town",
+        "US, WA, Bellevue",
+        "TW, TPE, Hsinchu City",
+        "US, CT, Windsor",
+        "CR, H, Heredia",
+        "MX, Zapopan",
+        "US, TX, Irving",
+        "IL, Haifa",
+        "CR, San Jose",
+        "GB, Cambridge",
+        "US, TN, Virtual Location - Tennessee",
+        "US, WA, Virtual Location - Washington",
+        "JO, Jordan",
+        "US, KY, Erlanger",
+        "US, TN, Mt. Juliet",
+        "US, AZ, Phoenix",
+        "US, OH, West Jefferson",
+        "US, VA, Fishersville",
+        "FR, 75, Paris",
+        "FR, Paris",
+        "DE, HE, Frankfurt",
+        "JO, Amman",
+        "DE, BY, Nuremberg",
+        "PL, Warsaw",
+        "ES, B, Barcelona",
+        "GB, Swansea",
+        "PL, Gorzyczki",
+        "PL, Okmiany",
+        "PL, Poznan",
+        "IT, Virtual Location - Italy",
+        "IT, PC, Castel San Giovanni",
+        "IT, BG, Cividate Al Piano",
+        "ES, TO, Illescas",
+        "PL, Sosnowiec",
+        "PL, Szczecin",
+        "PL, Swiebodzin",
+        "ES, Virtual",
+        "ES, M, Alcalá De Henares",
+        "DE, BW, Korntal-muenchingen",
+        "DE, NW, Oelde",
+        "DE, NW, Dortmund",
+        "DE, NW, Rheinberg",
+        "DE, Helmstedt",
+        "DE, NW, Horn-bad Meinberg",
+        "DE, Erfurt",
+        "FR, Virtual",
+        "DE, NW, Werne",
+        "DE, NW, Duisburg",
+        "IE, D, Dublin",
+        "AT, Graz",
+        "IT, Turin",
+        "DE, NI, Nittenau",
+        "SA, 01, Riyadh",
+        "CN, 13, Langfang",
+        "ES, Zaragoza"
+      ],
+      "sampleTitles": [
+        "Lead Graphic Designer - Europe, Operations Internal Communications",
+        "Personal Robotics Group - Research Scientist II Intern / Co-op - 2026 (Robotics, Manipulation, Locomotion, Controls, Reinforcement Learning, Perception, Manipulation, Planning, HRI and more)",
+        "Software Dev Engineer II, Internation Emerging Stores Sub-same Day",
+        "Software Dev Engineer II, Internation Emerging Stores Sub-same Day",
+        "2026 Software Dev Engineer Intern - Romania"
+      ]
+    },
+    {
+      "company": "Meta",
+      "companySlug": "meta",
+      "internshipCount": 239,
+      "locations": [
+        "Zurich, Switzerland",
+        "London, UK",
+        "Bellevue, WA",
+        "Menlo Park, CA",
+        "New York, NY",
+        "Redmond, WA",
+        "Seattle, WA",
+        "Boston, MA",
+        "San Francisco, CA",
+        "Dublin, Ireland",
+        "Sunnyvale, CA",
+        "Burlingame, CA",
+        "Tel Aviv, Israel",
+        "Paris, France",
+        "Pittsburgh, PA",
+        "Cork, Ireland",
+        "Washington, DC",
+        "Sausalito, CA",
+        "Bangalore, India",
+        "Singapore",
+        "Cambridge, UK",
+        "Austin, TX",
+        "Temple, TX",
+        "Jeffersonville, IN",
+        "El Paso, TX",
+        "Toronto, ON",
+        "Pasadena, CA"
+      ],
+      "sampleTitles": [
+        "Research Scientist Intern, AI/ML, Core Ads Growth (PhD)",
+        "Research Scientist Intern, AI/ML, Core Ads Growth (PhD)",
+        "Research Scientist Intern, Modern Recommendation Systems (PhD)",
+        "Research Scientist Intern, Modern Recommendation Systems (PhD)",
+        "Research Scientist Intern, Modern Recommendation Systems (PhD)"
+      ]
+    },
+    {
+      "company": "Microsoft",
+      "companySlug": "microsoft",
+      "internshipCount": 228,
+      "locations": [
+        "Norway, Oslo, Oslo",
+        "United States, Washington, Redmond",
+        "United Kingdom, Cambridgeshire, Cambridge",
+        "Canada, British Columbia, Vancouver",
+        "China, Beijing, Beijing",
+        "China, Shanghai, Shanghai",
+        "Greece, Attica, Athens",
+        "Italy, Milano, Milan",
+        "France, Paris, Paris",
+        "Finland, Uusimaa, Espoo",
+        "Taiwan, Taipei City, Taipei",
+        "United States, California, Mountain View",
+        "Belgium, Brussels Region, Brussels",
+        "Israel, Tel Aviv, Herzliya",
+        "China, Jiangsu, Suzhou",
+        "United States, Arizona, Goodyear",
+        "United States, California, Santa Clara",
+        "Egypt, Cairo, Cairo",
+        "India, Haryana, Gurgaon",
+        "India, Karnataka, Bangalore",
+        "India, Multiple Locations, Multiple Locations",
+        "United States, New York, New York",
+        "Ireland, Dublin, Dublin",
+        "United States, Virginia, Reston",
+        "Canada, Ontario, Toronto",
+        "China, Guangdong, Shenzhen",
+        "Korea, Seoul, Seoul",
+        "Denmark, Capital Region, Copenhagen",
+        "United States, Massachusetts, Cambridge",
+        "United Kingdom, London, London",
+        "Mexico, México, Mexico City",
+        "United States, California, Santa Barbara",
+        "Germany, Hessen, Frankfurt",
+        "United States, California, San Francisco",
+        "United States, Oregon, Hillsboro",
+        "Türkiye, Istanbul, Istanbul",
+        "Canada, Québec, Quebec City",
+        "Netherlands, Noord-Holland, Amsterdam",
+        "Canada, Québec, Montreal",
+        "Singapore, Singapore, Singapore",
+        "United States, Washington, Silverdale",
+        "Sweden, Multiple Locations, Multiple Locations",
+        "Romania, Bucharest, Bucharest",
+        "United States, California, Sunnyvale",
+        "United States, Maryland, Baltimore",
+        "United States, Wisconsin, Madison"
+      ],
+      "sampleTitles": [
+        "Solution Engineering Internship Opportunities",
+        "Solution Area Specialists Internship Opportunities",
+        "Customer Success Account Manager Internship Opportunities",
+        "Product Design Intern",
+        "Cambridge Internship Program - Infrastructure and Systems for AI"
+      ]
+    },
+    {
+      "company": "NVIDIA",
+      "companySlug": "nvidia",
+      "internshipCount": 218,
+      "locations": [
+        "Taiwan, Hsinchu",
+        "Taiwan, Taipei",
+        "US, CA, Santa Clara",
+        "China, Shanghai",
+        "China, Beijing",
+        "Germany, Munich",
+        "Switzerland, Zurich",
+        "Armenia, Yerevan",
+        "Israel, Yokneam",
+        "Israel, Raanana",
+        "Israel, Beer Sheva",
+        "Israel, Tel Aviv",
+        "Poland, Warsaw",
+        "Remote - Spain",
+        "Remote - Poland",
+        "Germany, Wuerselen",
+        "Canada, Toronto",
+        "Remote - US",
+        "US, WA, Redmond",
+        "US, WA, Seattle",
+        "US, TX, Austin",
+        "US, MA, Westford",
+        "Remote - Canada",
+        "US, MO, St. Louis",
+        "India, Bengaluru",
+        "Japan, Tokyo",
+        "Korea, Seoul",
+        "Vietnam, Ho Chi Minh City",
+        "Vietnam, Hanoi",
+        "China, Shenzhen",
+        "Remote - Singapore",
+        "Hungary, Budapest"
+      ],
+      "sampleTitles": [
+        "Silicon Photonics Test Engineer (RDSS Intern)",
+        "Silicon Photonics Test Engineer (RDSS Intern)",
+        "Quantum Computing Software Intern - Summer 2026",
+        "Product Manager MBA Intern, AI Platform Inference - Summer 2026",
+        "Memory Silicon Validation Engineer (RDSS Intern)"
+      ]
+    },
+    {
+      "company": "Apple",
+      "companySlug": "apple",
+      "internshipCount": 169,
+      "locations": [
+        "Beijing",
+        "Minato-ku",
+        "Cupertino",
+        "London",
+        "Shanghai",
+        "Munich",
+        "Heidelberg",
+        "Cork",
+        "Austin",
+        "Singapore",
+        "Dublin",
+        "Paris",
+        "Shenzhen",
+        "Suzhou",
+        "Aachen",
+        "Cambridge",
+        "Pohang",
+        "Copenhagen",
+        "Chengdu",
+        "Rellingen",
+        "Yokohama",
+        "Canberra",
+        "Zurich",
+        "New York",
+        "Linz",
+        "Barcelona",
+        "Cheltenham",
+        "Taipei City",
+        "Dietikon",
+        "Grenoble",
+        "Nabern",
+        "St Albans",
+        "United States"
+      ],
+      "sampleTitles": [
+        "Greater China Trade Compliance Intern - Beijing",
+        "Sales Internship Winter 2026",
+        "Machine Learning Engineer, International Data Engineering",
+        "Business Development Intern - Apple Wallet, Payments and Commerce (6 month contract)",
+        "Technical Intern - Apple Wallet, Payments and Commerce (6 month contract)"
+      ]
+    },
+    {
+      "company": "Google",
+      "companySlug": "google",
+      "internshipCount": 84,
+      "locations": [
+        "Hong Kong",
+        "Shanghai, China",
+        "Bengaluru, Karnataka, India",
+        "Waterloo, ON, Canada",
+        "Mountain View, CA, USA",
+        "Taipei, Taiwan",
+        "Warsaw, Poland",
+        "Sunnyvale, CA, USA",
+        "Mexico City, CDMX, Mexico",
+        "New Taipei, Banqiao District, New Taipei City, Taiwan",
+        "Singapore",
+        "Sydney NSW, Australia",
+        "Haifa, Israel",
+        "Tel Aviv, Israel",
+        "Dublin, Ireland",
+        "Thornton, CO, USA",
+        "Chicago, IL, USA",
+        "San Francisco, CA, USA",
+        "Belo Horizonte, State of Minas Gerais, Brazil",
+        "Inzai, Chiba, Japan",
+        "Ohio, USA",
+        "Mumbai, Maharashtra, India",
+        "Hyderabad, Telangana, India"
+      ],
+      "sampleTitles": [
+        "MBA Intern, 2026",
+        "MBA Intern, 2026",
+        "Silicon RTL Design Engineer, PhD, Early Career",
+        "Software Developer Intern, PhD, Summer 2026",
+        "Student Researcher, BS/MS, Winter/Summer 2026"
+      ]
+    },
+    {
+      "company": "Palantir",
+      "companySlug": "palantir",
+      "internshipCount": 43,
+      "locations": [
+        "Honolulu, HI",
+        "London, United Kingdom",
+        "New York, NY",
+        "Washington, D.C.",
+        "Seattle, WA",
+        "Denver, CO",
+        "Palo Alto, CA",
+        "Singapore, Singapore"
+      ],
+      "sampleTitles": [
+        "Deployment Strategist, Internship - US Government",
+        "Forward Deployed Software Engineer, Internship - Commercial",
+        "Forward Deployed Software Engineer, Internship - UK Government",
+        "Forward Deployed Software Engineer, Internship - US Government",
+        "Forward Deployed Software Engineer, New Grad - Commercial"
+      ]
+    },
+    {
+      "company": "Cloudflare",
+      "companySlug": "cloudflare",
+      "internshipCount": 32,
+      "locations": [
+        "Austin, US (In-Office)",
+        "London, UK (In-Office)",
+        "Lisbon, Portugal (In-Office)",
+        "Austin, US (Hybrid)",
+        "Bengaluru, India (Hybrid)",
+        "Lisbon, Portugal (Hybrid)",
+        "New York, US (In-Office)",
+        "San Francisco, US (In-Office)"
+      ],
+      "sampleTitles": [
+        "Data Engineer Intern (Summer 2026)",
+        "Data Operations Intern (Summer 2026)",
+        "Data Science Intern (Summer 2026)",
+        "Infrastructure Strategy & Analytics Intern",
+        "Internal Audit Data Science & Analytics Lead"
+      ]
+    },
+    {
+      "company": "Databricks",
+      "companySlug": "databricks",
+      "internshipCount": 28,
+      "locations": [
+        "Bellevue, Washington",
+        "Mountain View, California",
+        "San Francisco, California",
+        "Seattle, Washington",
+        "Amsterdam, Netherlands",
+        "Berlin, Germany",
+        "London, United Kingdom",
+        "Belgrade, Serbia",
+        "Vancouver, Canada",
+        "Aarhus, Denmark",
+        "Paris, France"
+      ],
+      "sampleTitles": [
+        "Director, IT Internal Audit",
+        "Director, IT Internal Audit",
+        "Director, IT Internal Audit",
+        "Director, IT Internal Audit",
+        "Legal Intern"
+      ]
+    },
+    {
+      "company": "Space x",
+      "companySlug": "space-x",
+      "internshipCount": 28,
+      "locations": [
+        "Hawthorne, CA",
+        "Washington, DC",
+        "Redmond, WA",
+        "Bastrop, TX",
+        "Cape Canaveral, FL",
+        "Starbase, TX",
+        "Flexible - Any SpaceX Site"
+      ],
+      "sampleTitles": [
+        "Accountant, International",
+        "Government Sales Manager (International)",
+        "Head of Internal Audit",
+        "Internal Mobility Specialist (Recruiting)",
+        "New Graduate Engineer, Electrical"
+      ]
+    },
+    {
+      "company": "Neuralink",
+      "companySlug": "neuralink",
+      "internshipCount": 26,
+      "locations": [
+        "Fremont, California, United States",
+        "Austin, Texas, United States"
+      ],
+      "sampleTitles": [
+        "Design Engineer Intern",
+        "Digital IC Design Engineer Intern",
+        "Electrical Engineer Intern, Implant Embedded Systems",
+        "Electrical Engineer Intern, Robotics and Surgery Engineering",
+        "Embedded Software Engineer Intern, Implant Embedded Systems"
+      ]
+    },
+    {
+      "company": "Stripe",
+      "companySlug": "stripe",
+      "internshipCount": 25,
+      "locations": [
+        "Toronto, Ontario, Canada",
+        "San Francisco, New York",
+        "Bengaluru, Singapore",
+        "Singapore",
+        "Dublin, London",
+        "Bengaluru, India",
+        "San Francisco, New York City, Seattle",
+        "New York City",
+        "Toronto",
+        "Seattle, WA",
+        "San Francisco, CA",
+        "Toronto, CAN",
+        "Dublin",
+        "London",
+        "Bucharest",
+        "San Francisco, Seattle, New York City",
+        "San Francisco, Seattle",
+        "Barcelona"
+      ],
+      "sampleTitles": [
+        "Data Analyst, Intern (Master's degree)",
+        "Finance & Strategy or Treasury Finance Intern",
+        "Internal Audit - Data Analytics",
+        "Internal Audit, Head of APAC Audit",
+        "International Corporate Governance Counsel"
+      ]
+    },
+    {
+      "company": "Samsung Research",
+      "companySlug": "samsung-research",
+      "internshipCount": 25,
+      "locations": [
+        "6105 Tennyson Pkwy, Suite 300, Plano TX 75024",
+        "665 Clyde Avenue, Mountain View,  CA, USA",
+        "Berkeley Heights, New Jersey, United States",
+        "735 Battery Street, San Francisco, CA, USA",
+        "18500 Von Karman Avenue, Suite 700, Irvine, CA, USA"
+      ],
+      "sampleTitles": [
+        "2026 Intern, 5G Terminal Performance Enhancement Research (Summer)",
+        "2026 Intern, 6G Cellular Standardization (Spring/Summer)",
+        "2026 Intern, Agentic Browser Research Engineer (Summer)",
+        "2026 Intern, AI Algorithm NPU Simulation (Spring/Summer)",
+        "2026 Intern, AI Computational Imaging and Video (Spring/Summer)"
+      ]
+    },
+    {
+      "company": "Scaleai",
+      "companySlug": "scaleai",
+      "internshipCount": 22,
+      "locations": [
+        "Doha, Qatar",
+        "London, UK",
+        "United Kingdom",
+        "Middle East",
+        "San Francisco, CA",
+        "Dubai, UAE",
+        "Riyadh, Saudi Arabia"
+      ],
+      "sampleTitles": [
+        "Applied AI Engineer, International Public Sector",
+        "Applied AI Engineer, International Public Sector",
+        "Engagement Manager, International Public Sector",
+        "Engineering Manager, International Public Sector",
+        "Executive Assistant, International Public Sector"
+      ]
+    },
+    {
+      "company": "Robinhood",
+      "companySlug": "robinhood",
+      "internshipCount": 16,
+      "locations": [
+        "Menlo Park, CA",
+        "Washington, DC",
+        "Chicago, IL",
+        "New York, NY",
+        "Luxembourg, Luxembourg",
+        "Toronto, Canada"
+      ],
+      "sampleTitles": [
+        "Corporate and Commercial Legal Intern",
+        "Corporate and Commercial Legal Intern",
+        "Corporate Treasury Operations Intern (Summer 2026)",
+        "Internal Audit Senior Associate",
+        "Internal Audit Senior Associate"
+      ]
+    },
+    {
+      "company": "Voodoo",
+      "companySlug": "voodoo",
+      "internshipCount": 11,
+      "locations": [
+        "Paris",
+        "USA"
+      ],
+      "sampleTitles": [
+        "Growth Business Analyst - Internship",
+        "Account Development Representative - Internship",
+        "Students & Graduates – Open Application",
+        "Treasury Intern",
+        "Legal Intern - Labor Law - Stage Droit Social - July 2026"
+      ]
+    },
+    {
+      "company": "Uber",
+      "companySlug": "uber",
+      "internshipCount": 11,
+      "locations": [
+        "Paris, France",
+        "Mexico City, Mexico",
+        "Bogota, Colombia",
+        "Santiago, Chile",
+        "Amsterdam, Netherlands",
+        "Madrid, Spain",
+        "New York, New York, United States",
+        "San Francisco, California, United States",
+        "Sunnyvale, California, United States",
+        "Sao Paulo, São Paulo, Brazil",
+        "Hyderabad, Telangāna, India"
+      ],
+      "sampleTitles": [
+        "2026 Account Coordinator Intern, Paris",
+        "2026 Operations Internship, Mexico",
+        "2026 Operations Internship, Colombia",
+        "2026 Operations Internship, Chile",
+        "2026 PhD Software Engineering Internship, Developer Platform, Amsterdam"
+      ]
+    },
+    {
+      "company": "Jane street",
+      "companySlug": "jane-street",
+      "internshipCount": 10,
+      "locations": [
+        "New York, New York, United States",
+        "Hong Kong, Hong Kong",
+        "London, England, United Kingdom"
+      ],
+      "sampleTitles": [
+        "Campus Recruiter, Machine Learning and Quantitative Research",
+        "Campus Recruiter, Partnerships & Initiatives",
+        "Campus Recruiter, Technology",
+        "Campus Recruiter, Technology",
+        "Campus Recruiting Coordinator"
+      ]
+    },
+    {
+      "company": "Ramp",
+      "companySlug": "ramp",
+      "internshipCount": 9,
+      "locations": [
+        "New York, NY (HQ)"
+      ],
+      "sampleTitles": [
+        "University Grad | Customer Experience Agent",
+        "Software Engineer Internship, iOS",
+        "Software Engineer Internship, Frontend",
+        "Software Engineer Internship, Android",
+        "Applied Scientist Intern"
+      ]
+    },
+    {
+      "company": "Duolingo",
+      "companySlug": "duolingo",
+      "internshipCount": 9,
+      "locations": [
+        "Pittsburgh, PA",
+        "New York, NY",
+        "Detroit, MI"
+      ],
+      "sampleTitles": [
+        "AI Research Engineer, New PhD Graduate",
+        "AI Research Engineer, New PhD Graduate",
+        "Illustrator, Thrive Intern",
+        "Influencer Marketing, Intern",
+        "Internal Audit, Intern"
+      ]
+    },
+    {
+      "company": "Mistral",
+      "companySlug": "mistral",
+      "internshipCount": 8,
+      "locations": [
+        "Paris"
+      ],
+      "sampleTitles": [
+        "AI Scientist - Paris, London, Palo Alto (Internship Phd)",
+        "AI Scientist - Paris, London, Palo Alto (Internship, Master's students)",
+        "Applied AI, Forward Deployed Machine Learning Engineer - (Internship)",
+        "Applied Scientist / Research Engineer (Internship)",
+        "Director of Internal Control"
+      ]
+    },
+    {
+      "company": "Togetherai",
+      "companySlug": "togetherai",
+      "internshipCount": 8,
+      "locations": [
+        "San Francisco"
+      ],
+      "sampleTitles": [
+        "Frontier Agents Intern (Summer 2026)",
+        "Product Marketing Intern (Summer 2026)",
+        "Research Intern, Inference (Summer 2026)",
+        "Research Intern, Model Shaping (Summer 2026)",
+        "Research Intern RL & Post-Training Systems, Turbo (Summer 2026)"
+      ]
+    },
+    {
+      "company": "Airbnb",
+      "companySlug": "airbnb",
+      "internshipCount": 8,
+      "locations": [
+        "United States",
+        "China",
+        "New York, Washington D.C., San Francisco",
+        "Remote, United States"
+      ],
+      "sampleTitles": [
+        "Advanced Analytics Intern",
+        "Lead Experience Designer, International",
+        "Legal Intern, Policy",
+        "Senior Principal, Internal Audit and Advisory",
+        "Senior Program Manager, Design, International"
+      ]
+    },
+    {
+      "company": "Notion",
+      "companySlug": "notion",
+      "internshipCount": 7,
+      "locations": [
+        "San Francisco, California",
+        "Hyderabad, India"
+      ],
+      "sampleTitles": [
+        "Software Engineer Intern (Summer 2026)",
+        "Head of Internal Communications",
+        "Early Career People Projects",
+        "Software Engineer, AI Agentic Search, Early Career",
+        "Software Engineer, Fullstack, Early Career"
+      ]
+    },
+    {
+      "company": "Veepee",
+      "companySlug": "veepee",
+      "internshipCount": 7,
+      "locations": [
+        "Milan",
+        "Barcelona",
+        "Brussels (Vorst)",
+        "Saint-Denis"
+      ],
+      "sampleTitles": [
+        "B2C Planner Intern",
+        "Content Manager - Internship agreement (W/M/X)",
+        "PR specialist Internship",
+        "Sales Analyst - Internship (X/M/W)",
+        "Sales Assistant Intern - Travel (W/M/X)"
+      ]
+    },
+    {
+      "company": "Cohere",
+      "companySlug": "cohere",
+      "internshipCount": 6,
+      "locations": [
+        "Canada",
+        "Toronto",
+        "United Kingdom"
+      ],
+      "sampleTitles": [
+        "Research Internship (Spring 2026)",
+        "Software Engineer, Internal Infrastructure (North America)",
+        "Software Engineer, Internal Infrastructure (Europe & UK)",
+        "Machine Learning Intern/Co-op  (Spring 2026)",
+        "Software Engineer Intern (Spring 2026)"
+      ]
+    },
+    {
+      "company": "Alan",
+      "companySlug": "alan",
+      "internshipCount": 6,
+      "locations": [
+        "Paris",
+        "Paris, France",
+        "Bordeaux, France",
+        "Anywhere in France, Belgium, Spain"
+      ],
+      "sampleTitles": [
+        "CTO Founder Associate - internship",
+        "Sales Graduate Program 🇫🇷",
+        "Sales Graduate Program 🇫🇷",
+        "CEO Founder Associate - Internship",
+        "Software Engineer Internship (6 months)"
+      ]
+    },
+    {
+      "company": "Anthropic",
+      "companySlug": "anthropic",
+      "internshipCount": 6,
+      "locations": [
+        "San Francisco, CA",
+        "Seattle, WA",
+        "Dublin, IE"
+      ],
+      "sampleTitles": [
+        "Internal Mobility Program Manager",
+        "Internal Mobility Program Manager",
+        "International Accounting Manager",
+        "International Indirect Tax VAT/GST",
+        "International Revenue Accountant"
+      ]
+    },
+    {
+      "company": "Perplexity",
+      "companySlug": "perplexity",
+      "internshipCount": 5,
+      "locations": [
+        "London",
+        "Belgrade",
+        "Berlin",
+        "San Francisco"
+      ],
+      "sampleTitles": [
+        "UK Internship Program",
+        "Internship - Search Machine Learning Engineer (Belgrade)",
+        "Internship - Machine Learning Research Engineer (Berlin)",
+        "Internship - Search Backend Infra Engineer",
+        "Executive & Internal Communications Manager"
+      ]
+    },
+    {
+      "company": "Sierra",
+      "companySlug": "sierra",
+      "internshipCount": 5,
+      "locations": [
+        "San Francisco, CA",
+        "London",
+        "New York, NY"
+      ],
+      "sampleTitles": [
+        "APX (New Grad)",
+        "Software Engineer, Agent (New Grad)",
+        "Software Engineer, Agent (New Grad)",
+        "Software Engineer, Agent (New Grad)",
+        "Intern, Agent Development (Summer 2026)"
+      ]
+    },
+    {
+      "company": "Neon",
+      "companySlug": "neon",
+      "internshipCount": 5,
+      "locations": [
+        "United Kingdom",
+        "San Francisco",
+        "Germany",
+        "New York City",
+        "Australia"
+      ],
+      "sampleTitles": [
+        "International Expansion Lead (Product)",
+        "International Expansion Lead (Product)",
+        "International Expansion Lead (Product)",
+        "International Expansion Lead (Product)",
+        "International Expansion Lead (Product)"
+      ]
+    },
+    {
+      "company": "Quantco",
+      "companySlug": "quantco",
+      "internshipCount": 5,
+      "locations": [
+        "Europe",
+        "USA"
+      ],
+      "sampleTitles": [
+        "AI Applied Scientist Intern",
+        "AI Engineering Intern",
+        "Data Science Intern",
+        "Data Science Intern",
+        "Software Engineering Intern"
+      ]
+    },
+    {
+      "company": "Figma",
+      "companySlug": "figma",
+      "internshipCount": 5,
+      "locations": [
+        "San Francisco, CA • New York, NY",
+        "New York, NY",
+        "London, England"
+      ],
+      "sampleTitles": [
+        "Early Career, Product Designer (2026)",
+        "Early Career, Software Engineer (2026)",
+        "Inside Sales Representative - Early Career (2026)",
+        "Software Engineer Intern (2026)",
+        "Software Engineer Intern, Developer Tools (2026) (London, United Kingdom)"
+      ]
+    },
+    {
+      "company": "Reddit",
+      "companySlug": "reddit",
+      "internshipCount": 5,
+      "locations": [
+        "London, United Kingdom",
+        "New York City, NY",
+        "Remote - India",
+        "Remote - Philippines",
+        "Remote - United Kingdom"
+      ],
+      "sampleTitles": [
+        "Finance Manager, International Strategic Finance",
+        "Internal Communications Senior Manager (Global Sales)",
+        "On Campus Ambassador, India (Contractor)",
+        "On Campus Ambassador, Philippines (Contractor)",
+        "Senior Accounts Receivable Analyst - International"
+      ]
+    },
+    {
+      "company": "Confluent",
+      "companySlug": "confluent",
+      "internshipCount": 4,
+      "locations": [
+        "Remote, United States",
+        "CA Office Toronto",
+        "Austin, Texas"
+      ],
+      "sampleTitles": [
+        "Partner Sales Operations Skillbridge Intern",
+        "Senior Engineer (Industry-Experienced Graduate)",
+        "Staff Software Engineer I - Internal Access Management",
+        "FPA Intern"
+      ]
+    },
+    {
+      "company": "Faire",
+      "companySlug": "faire",
+      "internshipCount": 4,
+      "locations": [
+        "Kitchener-Waterloo, ON",
+        "San Francisco, CA",
+        "Toronto, ON",
+        "New York City, NY"
+      ],
+      "sampleTitles": [
+        "Data Science Intern",
+        "Data Science Intern",
+        "Data Science Intern",
+        "Strategy & Analytics MBA Intern"
+      ]
+    },
+    {
+      "company": "Figure ai",
+      "companySlug": "figure-ai",
+      "internshipCount": 4,
+      "locations": [
+        "San Jose, CA"
+      ],
+      "sampleTitles": [
+        "Electrical Engineer Intern [Summer 2026]",
+        "Hardware Reliability Intern [Summer 2026]",
+        "Legal Intern [Summer 2026]",
+        "Robotics Integration Intern"
+      ]
+    },
+    {
+      "company": "Twitch",
+      "companySlug": "twitch",
+      "internshipCount": 4,
+      "locations": [
+        "San Francisco, CA"
+      ],
+      "sampleTitles": [
+        "Graduate Applied Science Intern",
+        "Graduate Data Science Intern",
+        "Undergrad Security Engineering Intern",
+        "Undergrad Software Engineering Intern"
+      ]
+    }
+  ]
+}
