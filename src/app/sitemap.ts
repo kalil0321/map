@@ -3,6 +3,7 @@ import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { generateJobSlug, generateCompanySlug, generateRoleSlug, generateLocationSlug } from '@/lib/slug-utils';
 import { getRoleStats } from '@/utils/role-utils';
 import { getLocationStats } from '@/utils/location-utils';
+import { getQualifyingInternshipCompanies } from '@/utils/internship-utils';
 
 const URLS_PER_SITEMAP = 45000; // Safe buffer under Google's 50k limit
 const MIN_JOBS_FOR_LISTING = 5; // Minimum jobs required for role/location pages
@@ -17,6 +18,7 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/roles`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/locations`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/internships`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
   ];
 
   // 2. Company pages (unique companies)
@@ -52,7 +54,16 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // 5. Job pages (all jobs)
+  // 5. Internship pages (companies with 4+ internships)
+  const internshipCompanies = getQualifyingInternshipCompanies(jobs, 4);
+  const internshipPages: MetadataRoute.Sitemap = internshipCompanies.map((company) => ({
+    url: `${baseUrl}/internships/${company.companySlug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.85,
+  }));
+
+  // 6. Job pages (all jobs)
   const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
     url: `${baseUrl}/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
     lastModified: new Date(),
@@ -60,7 +71,7 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...companyPages, ...rolePages, ...locationPages, ...jobPages];
+  return [...staticPages, ...companyPages, ...rolePages, ...locationPages, ...internshipPages, ...jobPages];
 }
 
 // Generate sitemap IDs based on total URL count
