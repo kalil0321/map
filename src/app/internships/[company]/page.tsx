@@ -245,29 +245,9 @@ export default async function CompanyInternshipsPage({ params }: { params: Promi
             </Suspense>
           </section>
 
-          {/* SEO Content */}
-          <section className="space-y-4 pt-4 border-t border-white/10">
-            <h2 className="text-lg font-semibold tracking-[-0.02em]">
-              About {companyName} Internships
-            </h2>
-            <div className="text-white/60 text-[14px] leading-relaxed space-y-3">
-              <p>
-                {companyName} offers internship and new graduate programs for students and recent graduates
-                interested in technology, engineering, and innovation. These positions typically offer
-                competitive compensation, mentorship from experienced professionals, and opportunities
-                for full-time conversion.
-              </p>
-              <p>
-                {companyName} internships are available across {locations.length} location{locations.length === 1 ? '' : 's'} including{' '}
-                {locations.slice(0, 5).join(', ')}
-                {locations.length > 5 && ` and ${locations.length - 5} more locations`}.
-              </p>
-            </div>
-          </section>
-
           {/* Related Companies */}
           {otherCompanies.length > 0 && (
-            <section className="space-y-4 pt-4 border-t border-white/10">
+            <section className="space-y-4 pt-4">
               <h2 className="text-lg font-semibold tracking-[-0.02em]">
                 More Internship Opportunities
               </h2>

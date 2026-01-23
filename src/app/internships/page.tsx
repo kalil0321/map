@@ -12,7 +12,7 @@ const currentYear = new Date().getFullYear();
 const nextYear = currentYear + 1;
 
 export const metadata: Metadata = {
-  title: `Tech Internships ${nextYear} - AI & Software Engineering Internships`,
+  title: `Tech Internships - AI & Software Engineering Internships`,
   description: `Discover ${nextYear} tech internships at top companies like Google, Amazon, Meta, Microsoft, NVIDIA, and more. Browse 2,800+ software engineering, AI, and data science internship opportunities worldwide.`,
   keywords: [
     `tech internships ${nextYear}`,
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     'data science internship',
   ],
   openGraph: {
-    title: `Tech Internships ${nextYear} | Stapply`,
+    title: `Tech Internships | Stapply`,
     description: `Browse 2,800+ internships at 39+ top tech companies including Google, Amazon, Meta, and more.`,
     url: 'https://map.stapply.ai/internships',
     type: 'website',
@@ -42,13 +42,13 @@ export const metadata: Metadata = {
         url: 'https://map.stapply.ai/api/og/internships',
         width: 1200,
         height: 630,
-        alt: `Tech Internships ${nextYear}`,
+        alt: `Tech Internships`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `Tech Internships ${nextYear} | Stapply`,
+    title: `Tech Internships | Stapply`,
     description: `Browse 2,800+ internships at 39+ top tech companies including Google, Amazon, Meta, and more.`,
     images: ['https://map.stapply.ai/api/og/internships'],
   },
@@ -111,7 +111,7 @@ export default async function InternshipsPage() {
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: `Tech Internships ${nextYear}`,
+    name: `Tech Internships`,
     description: `Browse ${totalInternships.toLocaleString()} tech internships at ${qualifyingCompanies.length} top companies`,
     url: 'https://map.stapply.ai/internships',
     mainEntity: {
@@ -146,7 +146,7 @@ export default async function InternshipsPage() {
         {/* Hero Section */}
         <section className="space-y-4">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-[-0.04em]">
-            Tech Internships {nextYear}
+            Tech Internships
           </h1>
           <p className="text-white/70 text-[15px] leading-relaxed max-w-2xl">
             Discover {totalInternships.toLocaleString()} internship and new graduate opportunities at{' '}
@@ -159,9 +159,6 @@ export default async function InternshipsPage() {
             </span>
             <span className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
               {qualifyingCompanies.length} companies
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              Updated daily
             </span>
           </div>
         </section>
@@ -201,67 +198,6 @@ export default async function InternshipsPage() {
           </div>
         </section>
 
-        {/* SEO Content Section */}
-        <section className="space-y-6 pt-4 border-t border-white/10">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-[-0.02em]">
-              Finding Your {nextYear} Tech Internship
-            </h2>
-            <div className="prose prose-invert prose-sm max-w-none text-white/70">
-              <p>
-                Landing a tech internship at a top company can launch your career in software engineering,
-                machine learning, data science, or product management. Here's what you need to know about
-                the {nextYear} internship season:
-              </p>
-              <h3 className="text-white text-base font-medium mt-6 mb-2">When to Apply</h3>
-              <p>
-                Most major tech companies like Google, Amazon, Meta, and Microsoft open their summer
-                internship applications between August and October. AI-focused companies like Anthropic,
-                OpenAI, and Mistral often have rolling admissions. We recommend applying as early as
-                possible, as positions fill quickly.
-              </p>
-              <h3 className="text-white text-base font-medium mt-6 mb-2">Popular Internship Types</h3>
-              <ul className="text-white/60">
-                <li><strong className="text-white/80">Software Engineering Intern</strong> - Build products, debug code, and ship features</li>
-                <li><strong className="text-white/80">Machine Learning Intern</strong> - Train models, run experiments, and deploy ML systems</li>
-                <li><strong className="text-white/80">Research Intern</strong> - Work on cutting-edge AI research with top scientists</li>
-                <li><strong className="text-white/80">Product Management Intern</strong> - Define roadmaps and work with cross-functional teams</li>
-                <li><strong className="text-white/80">Data Science Intern</strong> - Analyze data, build dashboards, and derive insights</li>
-              </ul>
-              <h3 className="text-white text-base font-medium mt-6 mb-2">New Graduate Programs</h3>
-              <p>
-                Many companies also offer new graduate positions for recent college graduates. These roles
-                typically offer mentorship, training programs, and a path to more senior positions. Check
-                each company's internship page for their new grad offerings.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Browse by Category */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-[-0.02em]">Browse More</h2>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/roles"
-              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/70 hover:bg-white/8 hover:border-white/20 hover:text-white transition-all no-underline"
-            >
-              Browse by Role
-            </Link>
-            <Link
-              href="/locations"
-              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/70 hover:bg-white/8 hover:border-white/20 hover:text-white transition-all no-underline"
-            >
-              Browse by Location
-            </Link>
-            <Link
-              href="/jobs"
-              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/70 hover:bg-white/8 hover:border-white/20 hover:text-white transition-all no-underline"
-            >
-              All Jobs
-            </Link>
-          </div>
-        </section>
       </main>
     </div>
   );

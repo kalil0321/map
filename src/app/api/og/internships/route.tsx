@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         // If company is provided, generate company-specific OG image
         if (companySlug) {
             const companyName = getCompanyDisplayName(allJobs, companySlug);
-            
+
             if (!companyName) {
                 return new Response('Company not found', { status: 404 });
             }
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
                                 fontWeight: '600',
                             }}
                         >
-                            INTERNSHIPS {nextYear}
+                            INTERNSHIPS
                         </div>
 
                         {/* Content */}
@@ -297,7 +297,7 @@ export async function GET(request: NextRequest) {
                                 letterSpacing: '-0.02em',
                             }}
                         >
-                            Tech Internships {nextYear}
+                            Tech Internships
                         </div>
 
                         {/* Stats badges */}
