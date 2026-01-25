@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "@tanstack/react-virtual": "^3.13.13",
     "@turf/boolean-point-in-polygon": "^7.3.2",
     "@turf/distance": "^7.3.2",

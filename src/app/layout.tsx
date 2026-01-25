@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/next';
 import { NuqsProvider } from '@/components/nuqs-provider';
+import { SiteFooter } from '@/components/site-footer';
 
 const baseUrl = "https://map.stapply.ai";
 
@@ -12,70 +13,7 @@ export const metadata: Metadata = {
     default: "Stapply Map - Explore Jobs at Tech Companies Worldwide",
     template: "%s | Stapply",
   },
-  description: "Stapply Map visualizes every job on an interactive globe—with deep coverage of Japan’s AI hubs—while Stapply (cloud + iOS coming soon) helps candidates apply fast and Stapply Workspace powers modern hiring.",
-  keywords: [
-    "best websites to apply for jobs",
-    "part time job search near me",
-    "job search near me",
-    "best hiring platform",
-    "job application platform",
-    "hiring platform",
-    "job application",
-    "job board",
-    "apply for jobs online",
-    "recruitment software",
-    "AI jobs",
-    "tech jobs",
-    "job search",
-    "job map",
-    "remote jobs",
-    "software engineering jobs",
-    "machine learning jobs",
-    "data science jobs",
-    "startup jobs",
-    "openai jobs",
-    "anthropic jobs",
-    "mistral ai jobs",
-    "deepmind jobs",
-    "cohere jobs",
-    "hugging face jobs",
-    "google jobs",
-    "microsoft jobs",
-    "apple jobs",
-    "amazon jobs",
-    "facebook jobs",
-    "twitter jobs",
-    "job search",
-    "stapply jobs",
-    "stapply job map",
-    "stapply job search",
-    "stapply job filter",
-    "stapply job discover",
-    "stapply job explore",
-    "stapply job map",
-    "stapply job search",
-    "stapply job filter",
-    "stapply job discover",
-    "stapply job explore",
-    "sentry",
-    "cloudflare",
-    "deepmind",
-    "cohere",
-    "tech careers",
-    "tech job notify",
-    "tech job alerts",
-    "job notifications",
-    "tech job notifications",
-    "job alert system",
-    "tech company jobs",
-    "all tech companies",
-    "tech job search",
-    "tech job finder",
-    "Japan tech jobs",
-    "Tokyo job search",
-    "Japan hiring platform",
-    "Japan job board",
-  ],
+  description: "Stapply Map visualizes every job on an interactive globe—with deep coverage of Japan's AI hubs—while Stapply (cloud + iOS coming soon) helps candidates apply fast and Stapply Workspace powers modern hiring.",
   authors: [{ name: "Stapply" }],
   creator: "Stapply",
   publisher: "Stapply",
@@ -256,6 +194,7 @@ export default function RootLayout({
         <Analytics />
         <NuqsProvider>
           {children}
+          <SiteFooter />
         </NuqsProvider>
       </body>
     </html>

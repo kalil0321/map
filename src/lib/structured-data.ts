@@ -44,7 +44,7 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
       name: getCountryFromLocation(job.location),
     },
     jobLocationType: determineJobLocationType(job.location),
-    employmentType: 'FULL_TIME',
+    employmentType: determineEmploymentType(job.title),
     directApply: true,
     applicationContact: {
       '@type': 'ContactPoint',
@@ -57,20 +57,63 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
     },
   };
 
-  // Add salary and experience information if available
-  const salaryFormatted = formatSalary(job);
-  let descriptionParts = [`${job.title} position at ${job.company} in ${job.location}.`];
+  // Add actual job description if available
+  if (job.description && job.description.length > 50) {
+    // Use actual description if substantial
+    const cleanDescription = job.description
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
 
-  if (salaryFormatted) {
-    descriptionParts.push(`Salary: ${salaryFormatted}.`);
+    if (cleanDescription.length > 50) {
+      schema.description = cleanDescription.substring(0, 5000); // Google's limit
+    }
+  } else {
+    // Fallback to generated description
+    let descriptionParts = [`${job.title} position at ${job.company} in ${job.location}.`];
+
+    const salaryFormatted = formatSalary(job);
+    if (salaryFormatted) {
+      descriptionParts.push(`Salary: ${salaryFormatted}.`);
+    }
+
+    if (job.experience) {
+      descriptionParts.push(`Experience required: ${job.experience}.`);
+    }
+
+    descriptionParts.push('Apply now to join our team. Visit Stapply to discover more jobs at tech companies.');
+    schema.description = descriptionParts.join(' ');
   }
 
+  // Add structured salary data if available
+  if (job.salary_currency && job.salary_summary) {
+    const salaryParts = job.salary_summary.split(' - ');
+    if (salaryParts.length === 2) {
+      const minSalary = parseFloat(salaryParts[0].replace(/[^0-9.]/g, ''));
+      const maxSalary = parseFloat(salaryParts[1].replace(/[^0-9.]/g, ''));
+
+      if (!isNaN(minSalary) && !isNaN(maxSalary)) {
+        schema.baseSalary = {
+          '@type': 'MonetaryAmount',
+          currency: job.salary_currency,
+          value: {
+            '@type': 'QuantitativeValue',
+            minValue: minSalary,
+            maxValue: maxSalary,
+            unitText: job.salary_period === '1 YEAR' ? 'YEAR' : job.salary_period || 'YEAR',
+          },
+        };
+      }
+    }
+  }
+
+  // Add experience requirements if available
   if (job.experience) {
-    descriptionParts.push(`Experience required: ${job.experience}.`);
+    schema.experienceRequirements = {
+      '@type': 'OccupationalExperienceRequirements',
+      monthsOfExperience: parseInt(job.experience) * 12 || 0,
+    };
   }
-
-  descriptionParts.push('Apply now to join our team. Visit Stapply to discover more jobs at tech companies.');
-  schema.description = descriptionParts.join(' ');
 
   return schema;
 }
@@ -106,6 +149,31 @@ function determineJobLocationType(location: string): string {
   }
 
   return 'ONSITE'; // Default
+}
+
+/**
+ * Determine employment type based on job title
+ */
+function determineEmploymentType(title: string): string {
+  const titleLower = title.toLowerCase();
+
+  if (titleLower.includes('intern') || titleLower.includes('internship')) {
+    return 'INTERN';
+  }
+
+  if (titleLower.includes('part-time') || titleLower.includes('part time')) {
+    return 'PART_TIME';
+  }
+
+  if (titleLower.includes('contract') || titleLower.includes('contractor')) {
+    return 'CONTRACTOR';
+  }
+
+  if (titleLower.includes('temporary') || titleLower.includes('temp')) {
+    return 'TEMPORARY';
+  }
+
+  return 'FULL_TIME'; // Default
 }
 
 /**

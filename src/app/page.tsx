@@ -16,7 +16,6 @@ import { AIService } from '@/services/ai-service';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
 import { Analytics } from '@vercel/analytics/react';
 import { getJobDate } from '@/utils/date-format';
-import { SeoContent } from '@/components/seo-content';
 import { isJobInGeoFilter, isRemoteJob, getDefaultGeoFilter, getDefaultRemoteFilter, type GeoFilter, type RemoteFilter } from '@/utils/geo-filter';
 
 function HomeContent() {
@@ -311,7 +310,6 @@ function HomeContent() {
         onClose={() => setIsAlertModalOpen(false)}
         jobs={jobMarkers}
       />
-      <SeoContent totalJobs={totalJobsCount} />
       <Link
         href="/jobs"
         className="fixed bottom-1 left-2 z-40 text-[10px] text-white/5 hover:text-white/60 transition-colors font-mono no-underline mix-blend-difference"
