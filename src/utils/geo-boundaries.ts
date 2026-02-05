@@ -38,6 +38,23 @@ export const COUNTRIES = [
   { code: 'DK', name: 'Denmark', continent: 'europe' },
   { code: 'FI', name: 'Finland', continent: 'europe' },
   { code: 'NO', name: 'Norway', continent: 'europe' },
+  { code: 'GR', name: 'Greece', continent: 'europe' },
+  { code: 'CZ', name: 'Czech Republic', continent: 'europe' },
+  { code: 'HU', name: 'Hungary', continent: 'europe' },
+  { code: 'RO', name: 'Romania', continent: 'europe' },
+  { code: 'BG', name: 'Bulgaria', continent: 'europe' },
+  { code: 'HR', name: 'Croatia', continent: 'europe' },
+  { code: 'SI', name: 'Slovenia', continent: 'europe' },
+  { code: 'SK', name: 'Slovakia', continent: 'europe' },
+  { code: 'LT', name: 'Lithuania', continent: 'europe' },
+  { code: 'LV', name: 'Latvia', continent: 'europe' },
+  { code: 'EE', name: 'Estonia', continent: 'europe' },
+  { code: 'LU', name: 'Luxembourg', continent: 'europe' },
+  { code: 'MT', name: 'Malta', continent: 'europe' },
+  { code: 'CY', name: 'Cyprus', continent: 'europe' },
+  { code: 'IS', name: 'Iceland', continent: 'europe' },
+  { code: 'UA', name: 'Ukraine', continent: 'europe' },
+  { code: 'TR', name: 'Turkey', continent: 'europe' },
   
   // Asia
   { code: 'JP', name: 'Japan', continent: 'asia' },
@@ -49,6 +66,19 @@ export const COUNTRIES = [
   { code: 'AE', name: 'United Arab Emirates', continent: 'asia' },
   { code: 'HK', name: 'Hong Kong', continent: 'asia' },
   { code: 'TW', name: 'Taiwan', continent: 'asia' },
+  { code: 'TH', name: 'Thailand', continent: 'asia' },
+  { code: 'VN', name: 'Vietnam', continent: 'asia' },
+  { code: 'MY', name: 'Malaysia', continent: 'asia' },
+  { code: 'ID', name: 'Indonesia', continent: 'asia' },
+  { code: 'PH', name: 'Philippines', continent: 'asia' },
+  { code: 'PK', name: 'Pakistan', continent: 'asia' },
+  { code: 'BD', name: 'Bangladesh', continent: 'asia' },
+  { code: 'LK', name: 'Sri Lanka', continent: 'asia' },
+  { code: 'QA', name: 'Qatar', continent: 'asia' },
+  { code: 'SA', name: 'Saudi Arabia', continent: 'asia' },
+  { code: 'KW', name: 'Kuwait', continent: 'asia' },
+  { code: 'BH', name: 'Bahrain', continent: 'asia' },
+  { code: 'OM', name: 'Oman', continent: 'asia' },
   
   // Oceania
   { code: 'AU', name: 'Australia', continent: 'oceania' },
@@ -59,12 +89,26 @@ export const COUNTRIES = [
   { code: 'AR', name: 'Argentina', continent: 'south-america' },
   { code: 'CL', name: 'Chile', continent: 'south-america' },
   { code: 'CO', name: 'Colombia', continent: 'south-america' },
+  { code: 'PE', name: 'Peru', continent: 'south-america' },
+  { code: 'VE', name: 'Venezuela', continent: 'south-america' },
+  { code: 'EC', name: 'Ecuador', continent: 'south-america' },
+  { code: 'UY', name: 'Uruguay', continent: 'south-america' },
+  { code: 'PY', name: 'Paraguay', continent: 'south-america' },
+  { code: 'BO', name: 'Bolivia', continent: 'south-america' },
   
   // Africa
   { code: 'ZA', name: 'South Africa', continent: 'africa' },
   { code: 'NG', name: 'Nigeria', continent: 'africa' },
   { code: 'EG', name: 'Egypt', continent: 'africa' },
   { code: 'KE', name: 'Kenya', continent: 'africa' },
+  { code: 'MA', name: 'Morocco', continent: 'africa' },
+  { code: 'GH', name: 'Ghana', continent: 'africa' },
+  { code: 'ET', name: 'Ethiopia', continent: 'africa' },
+  { code: 'TZ', name: 'Tanzania', continent: 'africa' },
+  { code: 'UG', name: 'Uganda', continent: 'africa' },
+  { code: 'RW', name: 'Rwanda', continent: 'africa' },
+  { code: 'TN', name: 'Tunisia', continent: 'africa' },
+  { code: 'DZ', name: 'Algeria', continent: 'africa' },
 ] as const;
 
 /**
@@ -309,6 +353,142 @@ export const COUNTRY_BOUNDARIES: Record<string, Feature<Polygon | MultiPolygon>>
       coordinates: [[[4, 58], [4, 72], [32, 72], [32, 58], [4, 58]]]
     }
   },
+  'GR': {
+    type: 'Feature',
+    properties: { name: 'Greece' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[19, 34], [19, 42], [30, 42], [30, 34], [19, 34]]]
+    }
+  },
+  'CZ': {
+    type: 'Feature',
+    properties: { name: 'Czech Republic' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[12, 48], [12, 51], [19, 51], [19, 48], [12, 48]]]
+    }
+  },
+  'HU': {
+    type: 'Feature',
+    properties: { name: 'Hungary' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[16, 45], [16, 49], [23, 49], [23, 45], [16, 45]]]
+    }
+  },
+  'RO': {
+    type: 'Feature',
+    properties: { name: 'Romania' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[20, 43], [20, 48], [30, 48], [30, 43], [20, 43]]]
+    }
+  },
+  'BG': {
+    type: 'Feature',
+    properties: { name: 'Bulgaria' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[22, 41], [22, 44], [29, 44], [29, 41], [22, 41]]]
+    }
+  },
+  'HR': {
+    type: 'Feature',
+    properties: { name: 'Croatia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[13, 42], [13, 47], [20, 47], [20, 42], [13, 42]]]
+    }
+  },
+  'SI': {
+    type: 'Feature',
+    properties: { name: 'Slovenia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[13, 45], [13, 47], [17, 47], [17, 45], [13, 45]]]
+    }
+  },
+  'SK': {
+    type: 'Feature',
+    properties: { name: 'Slovakia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[17, 47], [17, 50], [23, 50], [23, 47], [17, 47]]]
+    }
+  },
+  'LT': {
+    type: 'Feature',
+    properties: { name: 'Lithuania' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[21, 53], [21, 57], [27, 57], [27, 53], [21, 53]]]
+    }
+  },
+  'LV': {
+    type: 'Feature',
+    properties: { name: 'Latvia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[21, 55], [21, 59], [29, 59], [29, 55], [21, 55]]]
+    }
+  },
+  'EE': {
+    type: 'Feature',
+    properties: { name: 'Estonia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[22, 57], [22, 60], [29, 60], [29, 57], [22, 57]]]
+    }
+  },
+  'LU': {
+    type: 'Feature',
+    properties: { name: 'Luxembourg' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[5, 49], [5, 51], [7, 51], [7, 49], [5, 49]]]
+    }
+  },
+  'MT': {
+    type: 'Feature',
+    properties: { name: 'Malta' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[14, 35], [14, 37], [15, 37], [15, 35], [14, 35]]]
+    }
+  },
+  'CY': {
+    type: 'Feature',
+    properties: { name: 'Cyprus' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[32, 34], [32, 36], [35, 36], [35, 34], [32, 34]]]
+    }
+  },
+  'IS': {
+    type: 'Feature',
+    properties: { name: 'Iceland' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-25, 63], [-25, 67], [-13, 67], [-13, 63], [-25, 63]]]
+    }
+  },
+  'UA': {
+    type: 'Feature',
+    properties: { name: 'Ukraine' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[22, 44], [22, 53], [41, 53], [41, 44], [22, 44]]]
+    }
+  },
+  'TR': {
+    type: 'Feature',
+    properties: { name: 'Turkey' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[26, 36], [26, 42], [45, 42], [45, 36], [26, 36]]]
+    }
+  },
   
   // Asia
   'JP': {
@@ -383,6 +563,113 @@ export const COUNTRY_BOUNDARIES: Record<string, Feature<Polygon | MultiPolygon>>
       coordinates: [[[119, 21], [119, 26], [123, 26], [123, 21], [119, 21]]]
     }
   },
+  'TH': {
+    type: 'Feature',
+    properties: { name: 'Thailand' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[97, 5], [97, 21], [106, 21], [106, 5], [97, 5]]]
+    }
+  },
+  'VN': {
+    type: 'Feature',
+    properties: { name: 'Vietnam' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[102, 8], [102, 24], [110, 24], [110, 8], [102, 8]]]
+    }
+  },
+  'MY': {
+    type: 'Feature',
+    properties: { name: 'Malaysia' },
+    geometry: {
+      type: 'MultiPolygon',
+      coordinates: [
+        [[[99, 2], [99, 7], [120, 7], [120, 2], [99, 2]]],
+        [[[109, 0], [109, 5], [119, 5], [119, 0], [109, 0]]]
+      ]
+    }
+  },
+  'ID': {
+    type: 'Feature',
+    properties: { name: 'Indonesia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[95, -11], [95, 6], [141, 6], [141, -11], [95, -11]]]
+    }
+  },
+  'PH': {
+    type: 'Feature',
+    properties: { name: 'Philippines' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[117, 5], [117, 20], [127, 20], [127, 5], [117, 5]]]
+    }
+  },
+  'PK': {
+    type: 'Feature',
+    properties: { name: 'Pakistan' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[60, 23], [60, 38], [77, 38], [77, 23], [60, 23]]]
+    }
+  },
+  'BD': {
+    type: 'Feature',
+    properties: { name: 'Bangladesh' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[88, 20], [88, 27], [93, 27], [93, 20], [88, 20]]]
+    }
+  },
+  'LK': {
+    type: 'Feature',
+    properties: { name: 'Sri Lanka' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[79, 5], [79, 10], [82, 10], [82, 5], [79, 5]]]
+    }
+  },
+  'QA': {
+    type: 'Feature',
+    properties: { name: 'Qatar' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[50, 24], [50, 27], [52, 27], [52, 24], [50, 24]]]
+    }
+  },
+  'SA': {
+    type: 'Feature',
+    properties: { name: 'Saudi Arabia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[34, 16], [34, 32], [56, 32], [56, 16], [34, 16]]]
+    }
+  },
+  'KW': {
+    type: 'Feature',
+    properties: { name: 'Kuwait' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[47, 28], [47, 31], [49, 31], [49, 28], [47, 28]]]
+    }
+  },
+  'BH': {
+    type: 'Feature',
+    properties: { name: 'Bahrain' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[50, 25], [50, 27], [51, 27], [51, 25], [50, 25]]]
+    }
+  },
+  'OM': {
+    type: 'Feature',
+    properties: { name: 'Oman' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[52, 17], [52, 27], [60, 27], [60, 17], [52, 17]]]
+    }
+  },
   
   // Oceania
   'AU': {
@@ -435,6 +722,54 @@ export const COUNTRY_BOUNDARIES: Record<string, Feature<Polygon | MultiPolygon>>
       coordinates: [[[-80, -5], [-80, 14], [-66, 14], [-66, -5], [-80, -5]]]
     }
   },
+  'PE': {
+    type: 'Feature',
+    properties: { name: 'Peru' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-82, -19], [-82, 0], [-68, 0], [-68, -19], [-82, -19]]]
+    }
+  },
+  'VE': {
+    type: 'Feature',
+    properties: { name: 'Venezuela' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-74, 1], [-74, 13], [-59, 13], [-59, 1], [-74, 1]]]
+    }
+  },
+  'EC': {
+    type: 'Feature',
+    properties: { name: 'Ecuador' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-82, -5], [-82, 2], [-75, 2], [-75, -5], [-82, -5]]]
+    }
+  },
+  'UY': {
+    type: 'Feature',
+    properties: { name: 'Uruguay' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-59, -35], [-59, -30], [-52, -30], [-52, -35], [-59, -35]]]
+    }
+  },
+  'PY': {
+    type: 'Feature',
+    properties: { name: 'Paraguay' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-63, -28], [-63, -19], [-54, -19], [-54, -28], [-63, -28]]]
+    }
+  },
+  'BO': {
+    type: 'Feature',
+    properties: { name: 'Bolivia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-70, -23], [-70, -10], [-57, -10], [-57, -23], [-70, -23]]]
+    }
+  },
   
   // Africa
   'ZA': {
@@ -467,6 +802,70 @@ export const COUNTRY_BOUNDARIES: Record<string, Feature<Polygon | MultiPolygon>>
     geometry: {
       type: 'Polygon',
       coordinates: [[[33, -5], [33, 5], [42, 5], [42, -5], [33, -5]]]
+    }
+  },
+  'MA': {
+    type: 'Feature',
+    properties: { name: 'Morocco' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-13, 28], [-13, 36], [-1, 36], [-1, 28], [-13, 28]]]
+    }
+  },
+  'GH': {
+    type: 'Feature',
+    properties: { name: 'Ghana' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-4, 4], [-4, 12], [2, 12], [2, 4], [-4, 4]]]
+    }
+  },
+  'ET': {
+    type: 'Feature',
+    properties: { name: 'Ethiopia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[33, 3], [33, 19], [48, 19], [48, 3], [33, 3]]]
+    }
+  },
+  'TZ': {
+    type: 'Feature',
+    properties: { name: 'Tanzania' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[30, -12], [30, 0], [41, 0], [41, -12], [30, -12]]]
+    }
+  },
+  'UG': {
+    type: 'Feature',
+    properties: { name: 'Uganda' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[30, -2], [30, 5], [35, 5], [35, -2], [30, -2]]]
+    }
+  },
+  'RW': {
+    type: 'Feature',
+    properties: { name: 'Rwanda' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[29, -3], [29, -1], [31, -1], [31, -3], [29, -3]]]
+    }
+  },
+  'TN': {
+    type: 'Feature',
+    properties: { name: 'Tunisia' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[7, 30], [7, 38], [12, 38], [12, 30], [7, 30]]]
+    }
+  },
+  'DZ': {
+    type: 'Feature',
+    properties: { name: 'Algeria' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[[-9, 19], [-9, 37], [12, 37], [12, 19], [-9, 19]]]
     }
   },
 };
