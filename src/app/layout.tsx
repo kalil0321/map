@@ -3,7 +3,6 @@ import "./globals.css";
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/next';
 import { NuqsProvider } from '@/components/nuqs-provider';
-import { SiteFooter } from '@/components/site-footer';
 
 const baseUrl = "https://map.stapply.ai";
 
@@ -194,7 +193,6 @@ export default function RootLayout({
         <Analytics />
         <NuqsProvider>
           {children}
-          <SiteFooter />
         </NuqsProvider>
       </body>
     </html>
