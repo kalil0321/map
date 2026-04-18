@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { NuqsProvider } from '@/components/nuqs-provider';
 
 const baseUrl = "https://map.stapply.ai";
@@ -191,6 +192,7 @@ export default function RootLayout({
           {JSON.stringify(faqSchema)}
         </Script>
         <Analytics />
+        <SpeedInsights />
         <NuqsProvider>
           {children}
         </NuqsProvider>

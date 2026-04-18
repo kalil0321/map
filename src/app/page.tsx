@@ -14,7 +14,6 @@ import type { JobMarker } from '@/types';
 import { MAPBOX_TOKEN } from '@/lib/config';
 import { AIService } from '@/services/ai-service';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
-import { Analytics } from '@vercel/analytics/react';
 import { getJobDate } from '@/utils/date-format';
 import { isJobInGeoFilter, isRemoteJob, getDefaultGeoFilter, getDefaultRemoteFilter, type GeoFilter, type RemoteFilter } from '@/utils/geo-filter';
 
@@ -272,7 +271,6 @@ function HomeContent() {
     <>
       {/* Hidden heading for SEO */}
       <h1 className="sr-only">Stapply Map - Explore Jobs at Tech Companies Worldwide</h1>
-      <Analytics />
       <JobMap
         jobs={jobMarkers}
         mapboxToken={MAPBOX_TOKEN}
