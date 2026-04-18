@@ -3,8 +3,15 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
-import { generateLocationSlug, slugify } from '@/lib/slug-utils';
-import { groupLocations, extractLocationBase, normalizeLocation } from '@/utils/location-utils';
+import {
+  generateLocationSlug,
+  generateCompanySlug,
+  generateRoleSlug,
+  generateJobSlug,
+  slugify,
+} from '@/lib/slug-utils';
+import { groupLocations, extractLocationBase, normalizeLocation, getLocationStats } from '@/utils/location-utils';
+import { extractBaseRole } from '@/utils/role-utils';
 import { generateStaticHeatmapUrl } from '@/utils/map-helpers';
 import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
@@ -147,32 +154,13 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
       { name: locationDisplayName, url: pageUrl },
     ]);
 
-    // Generate CollectionPage structured data with JobPosting items
-    const jobPostings = matchingJobs.slice(0, 50).map((job, index) => {
-      const jobSlug = `${job.company}/${job.title}-${job.ats_id}`.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
-      return {
-        '@type': 'JobPosting',
-        title: job.title,
-        description: `${job.title} position at ${job.company} in ${job.location}`,
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: job.company,
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: job.location,
-          },
-          geo: {
-            '@type': 'GeoCoordinates',
-            latitude: job.lat,
-            longitude: job.lng,
-          },
-        },
-        url: `https://map.stapply.ai/jobs/${job.company}/${jobSlug}`,
-      };
-    });
+    // ItemList with real job URLs.
+    const itemList = matchingJobs.slice(0, 50).map((job, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: `https://map.stapply.ai/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
+      name: `${job.title} — ${job.company}`,
+    }));
 
     const collectionPageSchema = {
       '@context': 'https://schema.org',
@@ -183,12 +171,62 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
       mainEntity: {
         '@type': 'ItemList',
         numberOfItems: matchingJobs.length,
-        itemListElement: jobPostings.map((posting, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          item: posting,
-        })),
+        itemListElement: itemList,
       },
+    };
+
+    const topCompanies = Array.from(
+      matchingJobs.reduce<Map<string, number>>((acc, job) => {
+        acc.set(job.company, (acc.get(job.company) ?? 0) + 1);
+        return acc;
+      }, new Map()),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+
+    const topRoles = Array.from(
+      matchingJobs.reduce<Map<string, number>>((acc, job) => {
+        const base = extractBaseRole(job.title);
+        acc.set(base, (acc.get(base) ?? 0) + 1);
+        return acc;
+      }, new Map()),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+
+    const nearbyLocations = getLocationStats(allJobs)
+      .filter((s) => s.baseLocation !== locationDisplayName && s.count >= 5)
+      .slice(0, 10);
+
+    const faqs = [
+      {
+        q: `How many tech jobs are open in ${locationDisplayName} right now?`,
+        a: `Stapply Map currently lists ${matchingJobs.length.toLocaleString()} open role${matchingJobs.length === 1 ? '' : 's'} in ${locationDisplayName} from ${companies.length} companies. Every posting is refreshed daily directly from the employer's careers site.`,
+      },
+      {
+        q: `Which companies hire the most in ${locationDisplayName}?`,
+        a: `The top employers in ${locationDisplayName} on Stapply right now are ${topCompanies
+          .slice(0, 5)
+          .map(([c]) => c)
+          .join(', ')}.`,
+      },
+      {
+        q: `What kinds of roles are open in ${locationDisplayName}?`,
+        a: `The most common open roles in ${locationDisplayName} are ${topRoles
+          .slice(0, 5)
+          .map(([r]) => r)
+          .join(', ')}.`,
+      },
+    ];
+
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
     };
 
     return (
@@ -207,12 +245,24 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
         >
           {JSON.stringify(collectionPageSchema)}
         </Script>
+        <Script
+          id="location-faq-schema"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+        >
+          {JSON.stringify(faqSchema)}
+        </Script>
         <PageHeader />
 
         {/* Content */}
-        <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-6 pt-1">
-          <section className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">{locationDisplayName.toUpperCase()}</h1>
+        <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-8 pt-1">
+          <section className="space-y-3">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">
+              Tech Jobs in {locationDisplayName}
+            </h1>
+            <p className="text-white/70 text-[15px] leading-relaxed m-0">
+              {matchingJobs.length.toLocaleString()} open role{matchingJobs.length === 1 ? '' : 's'} in {locationDisplayName} across {companies.length} companies. Refreshed daily.
+            </p>
             <div className="flex flex-wrap items-center gap-3 text-[13px] text-white/60">
               <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
                 {matchingJobs.length.toLocaleString()} open role{matchingJobs.length === 1 ? '' : 's'}
@@ -261,6 +311,81 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
             >
               <AllJobsList jobs={matchingJobs} />
             </Suspense>
+          </section>
+
+          {topCompanies.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                Top companies hiring in {locationDisplayName}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {topCompanies.map(([company, count]) => (
+                  <Link
+                    key={company}
+                    href={`/jobs/${generateCompanySlug(company)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {company} ({count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {topRoles.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                Popular roles in {locationDisplayName}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {topRoles.map(([role, count]) => (
+                  <Link
+                    key={role}
+                    href={`/roles/${generateRoleSlug(role)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {role} ({count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold tracking-[-0.02em]">
+              Frequently asked questions
+            </h2>
+            <dl className="space-y-4">
+              {faqs.map((item) => (
+                <div key={item.q} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <dt className="text-[15px] font-medium text-white mb-1">{item.q}</dt>
+                  <dd className="text-[14px] text-white/70 leading-relaxed m-0">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          {nearbyLocations.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">Other active locations</h2>
+              <div className="flex flex-wrap gap-2">
+                {nearbyLocations.map((loc) => (
+                  <Link
+                    key={loc.baseLocation}
+                    href={`/locations/${generateLocationSlug(loc.baseLocation)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {loc.baseLocation} ({loc.count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="text-[12px] text-white/40">
+            <Link href={`/md/locations/${locationSlug}`} className="text-white/40 hover:text-white/60 no-underline">
+              View as markdown
+            </Link>
           </section>
         </main>
       </div>

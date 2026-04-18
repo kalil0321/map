@@ -3,11 +3,19 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
-import { generateJobSlug, generateCompanySlug, slugify } from '@/lib/slug-utils';
+import {
+  generateJobSlug,
+  generateCompanySlug,
+  generateRoleSlug,
+  generateLocationSlug,
+  slugify,
+} from '@/lib/slug-utils';
+import { extractBaseRole } from '@/utils/role-utils';
 import { generateStaticHeatmapUrl } from '@/utils/map-helpers';
 import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
+import { isInternshipJob } from '@/utils/internship-utils';
 
 type Params = { company: string };
 
@@ -126,6 +134,64 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
             { name: companyName, url: pageUrl },
         ]);
 
+        const topLocations = Array.from(
+          matchingJobs.reduce<Map<string, number>>((acc, job) => {
+            acc.set(job.location, (acc.get(job.location) ?? 0) + 1);
+            return acc;
+          }, new Map()),
+        )
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 12);
+
+        const topRoles = Array.from(
+          matchingJobs.reduce<Map<string, number>>((acc, job) => {
+            const base = extractBaseRole(job.title);
+            acc.set(base, (acc.get(base) ?? 0) + 1);
+            return acc;
+          }, new Map()),
+        )
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 12);
+
+        const internshipCount = matchingJobs.filter(isInternshipJob).length;
+
+        const faqs = [
+          {
+            q: `How many open positions does ${companyName} have right now?`,
+            a: `${companyName} has ${matchingJobs.length.toLocaleString()} open roles across ${locations.length} location${locations.length === 1 ? '' : 's'} on Stapply Map. The list is refreshed daily directly from their careers site.`,
+          },
+          internshipCount > 0
+            ? {
+                q: `Does ${companyName} have internships or new-grad positions?`,
+                a: `Yes. ${internshipCount} of the current ${companyName} openings are internships, new-grad, or early-career roles. See the /internships/${companySlug} page for the filtered list.`,
+              }
+            : null,
+          {
+            q: `Where does ${companyName} hire the most?`,
+            a: `${companyName}'s most active hiring locations on Stapply are ${topLocations
+              .slice(0, 5)
+              .map(([l]) => l)
+              .join(', ')}.`,
+          },
+          {
+            q: `What roles is ${companyName} hiring for?`,
+            a: `The most common open roles at ${companyName} right now are ${topRoles
+              .slice(0, 5)
+              .map(([r]) => r)
+              .join(', ')}.`,
+          },
+        ].filter(Boolean) as { q: string; a: string }[];
+
+        const faqSchema = {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a },
+          })),
+        };
+
         return (
             <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
                 <Script
@@ -135,12 +201,26 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                 >
                     {JSON.stringify(breadcrumbData)}
                 </Script>
+                <Script
+                    id="company-faq-schema"
+                    type="application/ld+json"
+                    strategy="beforeInteractive"
+                >
+                    {JSON.stringify(faqSchema)}
+                </Script>
                 <PageHeader />
 
                 {/* Content */}
-                <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-6 pt-1">
-                    <section className="space-y-2">
-                        <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">{companyName.toUpperCase()}</h1>
+                <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-8 pt-1">
+                    <section className="space-y-3">
+                        <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">
+                          {companyName} Jobs & Careers
+                        </h1>
+                        <p className="text-white/70 text-[15px] leading-relaxed m-0">
+                          {matchingJobs.length.toLocaleString()} open role{matchingJobs.length === 1 ? '' : 's'} at {companyName} across {locations.length} location{locations.length === 1 ? '' : 's'}
+                          {internshipCount > 0 ? `, including ${internshipCount} internship / new-grad position${internshipCount === 1 ? '' : 's'}` : ''}
+                          . Refreshed daily.
+                        </p>
                         <div className="flex flex-wrap items-center gap-3 text-[13px] text-white/60">
                             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
                                 {matchingJobs.length.toLocaleString()} open role{matchingJobs.length === 1 ? '' : 's'}
@@ -148,6 +228,14 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
                                 {locations.length} location{locations.length === 1 ? '' : 's'}
                             </span>
+                            {internshipCount > 0 && (
+                              <Link
+                                href={`/internships/${companySlug}`}
+                                className="px-3 py-1 rounded-full bg-white/5 border border-white/10 no-underline text-white/80 hover:bg-white/10"
+                              >
+                                {internshipCount} internships →
+                              </Link>
+                            )}
                         </div>
                     </section>
 
@@ -174,6 +262,64 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                         >
                             <AllJobsList jobs={matchingJobs} hideCompanyName={true} />
                         </Suspense>
+                    </section>
+
+                    {topLocations.length > 0 && (
+                      <section className="space-y-3">
+                        <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                          {companyName} locations
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {topLocations.map(([loc, count]) => (
+                            <Link
+                              key={loc}
+                              href={`/locations/${generateLocationSlug(loc)}`}
+                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                            >
+                              {loc} ({count})
+                            </Link>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {topRoles.length > 0 && (
+                      <section className="space-y-3">
+                        <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                          Roles hiring now
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {topRoles.map(([role, count]) => (
+                            <Link
+                              key={role}
+                              href={`/roles/${generateRoleSlug(role)}`}
+                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                            >
+                              {role} ({count})
+                            </Link>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    <section className="space-y-3">
+                      <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                        Frequently asked questions
+                      </h2>
+                      <dl className="space-y-4">
+                        {faqs.map((item) => (
+                          <div key={item.q} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                            <dt className="text-[15px] font-medium text-white mb-1">{item.q}</dt>
+                            <dd className="text-[14px] text-white/70 leading-relaxed m-0">{item.a}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+
+                    <section className="text-[12px] text-white/40">
+                      <Link href={`/md/company/${companySlug}`} className="text-white/40 hover:text-white/60 no-underline">
+                        View as markdown
+                      </Link>
                     </section>
                 </main>
             </div>

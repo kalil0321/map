@@ -1,17 +1,32 @@
 import { MetadataRoute } from 'next';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { generateJobSlug, generateCompanySlug, generateRoleSlug, generateLocationSlug } from '@/lib/slug-utils';
-import { getRoleStats } from '@/utils/role-utils';
+import { extractBaseRole, getRoleStats } from '@/utils/role-utils';
 import { getLocationStats } from '@/utils/location-utils';
-import { getQualifyingInternshipCompanies } from '@/utils/internship-utils';
+import { filterInternshipJobs, getQualifyingInternshipCompanies } from '@/utils/internship-utils';
 
 const URLS_PER_SITEMAP = 45000; // Safe buffer under Google's 50k limit
 const MIN_JOBS_FOR_LISTING = 5; // Minimum jobs required for role/location pages
+// Google Jobs drops listings that appear stale. Hide anything older than this
+// from the sitemap so crawl budget goes to fresh, indexable postings.
+const MAX_JOB_AGE_DAYS = 45;
+
+function parseJobDate(value: string | null | undefined): number {
+  if (!value) return Number.NaN;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? Number.NaN : parsed;
+}
 
 // Helper to build all sitemap entries
 async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://map.stapply.ai';
-  const jobs = await loadJobsWithCoordinatesServer('/ai.csv');
+  const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
+  const cutoff = Date.now() - MAX_JOB_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const jobs = allJobs.filter((job) => {
+    const ts = parseJobDate(job.posted_at);
+    // If there's no date, include it (legacy rows) rather than hide everything.
+    return Number.isNaN(ts) ? true : ts >= cutoff;
+  });
 
   // 1. Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -63,15 +78,45 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // 6. Job pages (all jobs)
-  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
-    url: `${baseUrl}/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.7,
-  }));
+  // 5b. Programmatic by-role internship pages (e.g. /internships/role/software-engineer).
+  // High-signal long-tail queries like "software engineer intern", "ml engineering
+  // internship" already rank us ~position 2; these give each cluster a dedicated page.
+  const internsByRoleCounts = new Map<string, number>();
+  for (const job of filterInternshipJobs(jobs)) {
+    const slug = generateRoleSlug(extractBaseRole(job.title));
+    internsByRoleCounts.set(slug, (internsByRoleCounts.get(slug) ?? 0) + 1);
+  }
+  const internshipRolePages: MetadataRoute.Sitemap = Array.from(internsByRoleCounts.entries())
+    .filter(([, count]) => count >= 5)
+    .map(([slug]) => ({
+      url: `${baseUrl}/internships/role/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    }));
 
-  return [...staticPages, ...companyPages, ...rolePages, ...locationPages, ...internshipPages, ...jobPages];
+  // 6. Job pages (fresh only). Use the job's own posted_at for lastModified so
+  // Google Jobs has an accurate freshness signal per URL.
+  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => {
+    const ts = parseJobDate(job.posted_at);
+    const lastModified = Number.isNaN(ts) ? new Date() : new Date(ts);
+    return {
+      url: `${baseUrl}/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
+      lastModified,
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    };
+  });
+
+  return [
+    ...staticPages,
+    ...companyPages,
+    ...rolePages,
+    ...locationPages,
+    ...internshipPages,
+    ...internshipRolePages,
+    ...jobPages,
+  ];
 }
 
 // Generate sitemap IDs based on total URL count

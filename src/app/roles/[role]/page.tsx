@@ -3,8 +3,14 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
-import { generateRoleSlug, slugify } from '@/lib/slug-utils';
-import { groupRoles, extractBaseRole, normalizeRole } from '@/utils/role-utils';
+import {
+  generateRoleSlug,
+  generateCompanySlug,
+  generateLocationSlug,
+  generateJobSlug,
+  slugify,
+} from '@/lib/slug-utils';
+import { groupRoles, extractBaseRole, normalizeRole, getRoleStats } from '@/utils/role-utils';
 import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
@@ -136,27 +142,14 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       { name: roleDisplayName, url: pageUrl },
     ]);
 
-    // Generate CollectionPage structured data with JobPosting items
-    const jobPostings = matchingJobs.slice(0, 50).map((job, index) => {
-      const jobSlug = `${job.company}/${job.title}-${job.ats_id}`.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
-      return {
-        '@type': 'JobPosting',
-        title: job.title,
-        description: `${job.title} position at ${job.company} in ${job.location}`,
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: job.company,
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: job.location,
-          },
-        },
-        url: `https://map.stapply.ai/jobs/${job.company}/${jobSlug}`,
-      };
-    });
+    // Build an ItemList of real job URLs (previously this emitted corrupt
+    // slugs that didn't match our real routes).
+    const itemList = matchingJobs.slice(0, 50).map((job, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: `https://map.stapply.ai/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
+      name: `${job.title} — ${job.company}`,
+    }));
 
     const collectionPageSchema = {
       '@context': 'https://schema.org',
@@ -167,12 +160,70 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       mainEntity: {
         '@type': 'ItemList',
         numberOfItems: matchingJobs.length,
-        itemListElement: jobPostings.map((posting, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          item: posting,
-        })),
+        itemListElement: itemList,
       },
+    };
+
+    // Related roles for internal linking — siblings in our role taxonomy that
+    // users searching this role often consider next. Google rewards tight
+    // topical clusters.
+    const relatedRoles = getRoleStats(allJobs)
+      .filter((r) => r.count >= 5 && r.baseRole !== roleDisplayName)
+      .slice(0, 12);
+
+    const topCompanies = Array.from(
+      matchingJobs.reduce<Map<string, number>>((acc, job) => {
+        acc.set(job.company, (acc.get(job.company) ?? 0) + 1);
+        return acc;
+      }, new Map()),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+
+    const topLocations = Array.from(
+      matchingJobs.reduce<Map<string, number>>((acc, job) => {
+        acc.set(job.location, (acc.get(job.location) ?? 0) + 1);
+        return acc;
+      }, new Map()),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+
+    // FAQ schema + visible FAQ give the page a shot at rich results and
+    // provide real content for crawlers beyond the job list.
+    const faqs = [
+      {
+        q: `How many ${roleDisplayName} jobs are currently open?`,
+        a: `There are ${matchingJobs.length.toLocaleString()} open ${roleDisplayName} roles on Stapply Map across ${companies.length} companies and ${locations.length} locations. Listings are refreshed daily directly from each employer's careers site.`,
+      },
+      {
+        q: `Which companies are hiring ${roleDisplayName}s right now?`,
+        a: `Top employers right now include ${topCompanies
+          .slice(0, 5)
+          .map(([c]) => c)
+          .join(', ')}. Each company page lists their full roster of open roles.`,
+      },
+      {
+        q: `Where are ${roleDisplayName} jobs concentrated?`,
+        a: `The most active ${roleDisplayName} markets on Stapply are ${topLocations
+          .slice(0, 5)
+          .map(([l]) => l)
+          .join(', ')}.`,
+      },
+      {
+        q: `How often are ${roleDisplayName} listings updated?`,
+        a: `Every posting on this page is pulled from the company's own applicant tracking system and refreshed daily. Stale listings (older than 45 days) are automatically removed.`,
+      },
+    ];
+
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
     };
 
     return (
@@ -191,12 +242,26 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
         >
           {JSON.stringify(collectionPageSchema)}
         </Script>
+        <Script
+          id="role-faq-schema"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+        >
+          {JSON.stringify(faqSchema)}
+        </Script>
         <PageHeader />
 
         {/* Content */}
-        <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-6 pt-1">
-          <section className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">{roleDisplayName.toUpperCase()}</h1>
+        <main className="max-w-4xl mx-auto px-5 pb-4 md:pb-6 space-y-8 pt-1">
+          <section className="space-y-3">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">
+              {roleDisplayName} Jobs
+            </h1>
+            <p className="text-white/70 text-[15px] leading-relaxed m-0">
+              {matchingJobs.length.toLocaleString()} open {roleDisplayName.toLowerCase()} role
+              {matchingJobs.length === 1 ? '' : 's'} at {companies.length} companies across{' '}
+              {locations.length} locations. Refreshed daily from each employer's careers site.
+            </p>
             <div className="flex flex-wrap items-center gap-3 text-[13px] text-white/60">
               <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
                 {matchingJobs.length.toLocaleString()} open role{matchingJobs.length === 1 ? '' : 's'}
@@ -233,6 +298,81 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             >
               <AllJobsList jobs={matchingJobs} />
             </Suspense>
+          </section>
+
+          {topCompanies.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                Top companies hiring {roleDisplayName.toLowerCase()}s
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {topCompanies.map(([company, count]) => (
+                  <Link
+                    key={company}
+                    href={`/jobs/${generateCompanySlug(company)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {company} ({count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {topLocations.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">
+                Where {roleDisplayName.toLowerCase()} roles are concentrated
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {topLocations.map(([loc, count]) => (
+                  <Link
+                    key={loc}
+                    href={`/locations/${generateLocationSlug(loc)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {loc} ({count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold tracking-[-0.02em]">
+              Frequently asked questions
+            </h2>
+            <dl className="space-y-4">
+              {faqs.map((item) => (
+                <div key={item.q} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <dt className="text-[15px] font-medium text-white mb-1">{item.q}</dt>
+                  <dd className="text-[14px] text-white/70 leading-relaxed m-0">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          {relatedRoles.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold tracking-[-0.02em]">Related roles</h2>
+              <div className="flex flex-wrap gap-2">
+                {relatedRoles.map((r) => (
+                  <Link
+                    key={r.baseRole}
+                    href={`/roles/${generateRoleSlug(r.baseRole)}`}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                  >
+                    {r.baseRole} ({r.count})
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="text-[12px] text-white/40">
+            <Link href={`/md/roles/${roleSlug}`} className="text-white/40 hover:text-white/60 no-underline">
+              View as markdown
+            </Link>
           </section>
         </main>
       </div>

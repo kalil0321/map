@@ -7,10 +7,20 @@ import { normalizeJobUrl } from '@/utils/url-utils';
  * https://schema.org/JobPosting
  */
 export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
-  const postedDate =
-    job.posted_at && !Number.isNaN(Date.parse(job.posted_at))
-      ? new Date(job.posted_at)
-      : new Date();
+  // Anchor freshness on posted_at when present. Google Jobs penalizes
+  // listings whose validThrough is far in the past OR unrealistically far
+  // in the future relative to datePosted.
+  const hasPostedDate = !!(job.posted_at && !Number.isNaN(Date.parse(job.posted_at)));
+  const postedDate = hasPostedDate ? new Date(job.posted_at!) : new Date();
+
+  // Many ATS postings go stale in 30–45 days. Give Google a narrower window
+  // that resets daily for jobs we still surface; this matches our sitemap
+  // pruning cutoff.
+  const VALID_WINDOW_DAYS = 45;
+  const validThroughMs = Math.max(
+    postedDate.getTime() + VALID_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+    Date.now() + 7 * 24 * 60 * 60 * 1000,
+  );
 
   const schema: any = {
     '@context': 'https://schema.org',
@@ -18,11 +28,8 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
     title: job.title,
     description: `${job.title} position at ${job.company} in ${job.location}. Apply now to join our team. Visit Stapply to discover more jobs at tech companies.`,
     datePosted: postedDate.toISOString().split('T')[0],
-    validThrough: new Date(
-      postedDate.getTime() + 60 * 24 * 60 * 60 * 1000,
-    )
-      .toISOString()
-      .split('T')[0],
+    validThrough: new Date(validThroughMs).toISOString().split('T')[0],
+    url: jobUrl,
     hiringOrganization: {
       '@type': 'Organization',
       name: job.company,
@@ -46,9 +53,10 @@ export function generateJobPostingSchema(job: JobMarker, jobUrl: string) {
     jobLocationType: determineJobLocationType(job.location),
     employmentType: determineEmploymentType(job.title),
     directApply: true,
+    // Keep our own URL here so the Google Jobs "Apply" routes through us.
     applicationContact: {
       '@type': 'ContactPoint',
-      url: normalizeJobUrl(job.url),
+      url: jobUrl,
     },
     identifier: {
       '@type': 'PropertyValue',

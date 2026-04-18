@@ -42,13 +42,14 @@ export function extractBaseRole(title: string): string {
     baseRole = baseRole.replace(pattern, ' ').trim();
   }
 
-  // Normalize common synonyms and variations
+  // Normalize common synonyms and variations.
+  // IMPORTANT: every entry below must be matched with \b word boundaries.
+  // Historical bug: unbounded replaces corrupted words (e.g. "english" -> "engineerlish",
+  // "engineer" -> "engineerineer"), producing broken slugs indexed by Google.
   const synonymMap: Record<string, string> = {
     'sde': 'software engineer',
     'sw engineer': 'software engineer',
     'software dev': 'software engineer',
-    'developer': 'engineer',
-    'dev': 'engineer',
     'swe': 'software engineer',
     'mle': 'machine learning engineer',
     'ml engineer': 'machine learning engineer',
@@ -57,18 +58,16 @@ export function extractBaseRole(title: string): string {
     'ds': 'data scientist',
     'pm': 'product manager',
     'product mgr': 'product manager',
-    'eng': 'engineer',
-    'engr': 'engineer',
   };
 
-  // Handle plurals
-  baseRole = baseRole.replace(/s$/, '');
+  // Handle trailing plurals only on the final word (e.g. "engineers" -> "engineer").
+  baseRole = baseRole.replace(/s\b$/, '');
 
-  // Apply synonym mapping
+  // Apply synonym mapping with word boundaries so partial substrings like
+  // "eng" inside "english" or "engineer" never trigger a replacement.
   for (const [synonym, canonical] of Object.entries(synonymMap)) {
-    if (baseRole.includes(synonym)) {
-      baseRole = baseRole.replace(new RegExp(synonym.replace(/\s+/g, '\\s+'), 'g'), canonical);
-    }
+    const pattern = new RegExp('\\b' + synonym.replace(/\s+/g, '\\s+') + '\\b', 'g');
+    baseRole = baseRole.replace(pattern, canonical);
   }
 
   // Capitalize first letter of each word for display
