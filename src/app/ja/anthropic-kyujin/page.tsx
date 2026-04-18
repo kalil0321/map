@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     canonical: 'https://map.stapply.ai/ja/anthropic-kyujin',
     languages: {
       ja: 'https://map.stapply.ai/ja/anthropic-kyujin',
+      en: 'https://map.stapply.ai/jobs/anthropic',
+      'x-default': 'https://map.stapply.ai/jobs/anthropic',
     },
   },
 };

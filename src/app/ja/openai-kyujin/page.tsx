@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     canonical: 'https://map.stapply.ai/ja/openai-kyujin',
     languages: {
       ja: 'https://map.stapply.ai/ja/openai-kyujin',
+      en: 'https://map.stapply.ai/jobs/openai',
+      'x-default': 'https://map.stapply.ai/jobs/openai',
     },
   },
 };

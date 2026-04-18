@@ -39,6 +39,8 @@ export async function GET() {
     `- [Map and search UI](${BASE}): Interactive job map`,
     `- [All jobs list](${BASE}/jobs): Every indexed job`,
     `- [Markdown index](${BASE}/md): LLM-friendly markdown mirror`,
+    `- [Tech jobs in Japan (English)](${BASE}/japan): curated Japan-based tech roles`,
+    `- [日本のテック求人 (Japanese)](${BASE}/ja): Japanese-language mirror of the Japan coverage`,
     '',
     '## Internships and early career',
     ...internshipCompanies.map(

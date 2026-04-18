@@ -4,6 +4,7 @@ import { generateJobSlug, generateCompanySlug, generateRoleSlug, generateLocatio
 import { extractBaseRole, getRoleStats } from '@/utils/role-utils';
 import { getLocationStats } from '@/utils/location-utils';
 import { filterInternshipJobs, getQualifyingInternshipCompanies } from '@/utils/internship-utils';
+import { filterJapanJobs, getJapanCityStats } from '@/utils/japan-utils';
 
 const URLS_PER_SITEMAP = 45000; // Safe buffer under Google's 50k limit
 const MIN_JOBS_FOR_LISTING = 5; // Minimum jobs required for role/location pages
@@ -34,7 +35,37 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/roles`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/locations`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/internships`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/japan`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/ja`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
   ];
+
+  // 1b. Japan city pages (English) + Japanese mirrors.
+  const japanJobs = filterJapanJobs(jobs);
+  const japanCities = getJapanCityStats(japanJobs);
+  const japanCityPages: MetadataRoute.Sitemap = japanCities.flatMap(({ slug }) => [
+    {
+      url: `${baseUrl}/japan/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/ja/${slug}-kyujin`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.85,
+    },
+  ]);
+
+  // 1c. Japanese company pages (/ja/{company}-kyujin) for companies with at
+  // least one Japan-based job.
+  const japanCompanySlugs = new Set(japanJobs.map((j) => generateCompanySlug(j.company)));
+  const jaCompanyPages: MetadataRoute.Sitemap = Array.from(japanCompanySlugs).map((slug) => ({
+    url: `${baseUrl}/ja/${slug}-kyujin`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }));
 
   // 2. Company pages (unique companies)
   const companyMap = new Map<string, string>();
@@ -110,6 +141,8 @@ async function buildAllSitemapEntries(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...japanCityPages,
+    ...jaCompanyPages,
     ...companyPages,
     ...rolePages,
     ...locationPages,
