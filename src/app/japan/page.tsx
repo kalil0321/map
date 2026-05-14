@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
@@ -10,45 +9,15 @@ import {
 } from '@/utils/japan-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateCompanySlug, generateRoleSlug } from '@/lib/slug-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
-
-// Japan hub (English). Search Console data shows Japan has 1.49% CTR vs
-// 0.04% US — our niche advantage. This page targets "tech jobs in Japan",
-// "AI jobs Japan", "Tokyo tech jobs", and ranks as the canonical English
-// entry point for the Japan-focused listings.
 
 export const revalidate = 3600;
 
 const BASE = 'https://map.stapply.ai';
-const PAGE_URL = `${BASE}/japan`;
 
 export const metadata: Metadata = {
   title: 'Tech Jobs in Japan — AI, Engineering, and Startups | Stapply',
-  description:
-    'Curated, daily-refreshed tech jobs in Japan. AI, machine learning, software engineering, and product roles at OpenAI, Anthropic, Google, Microsoft, Mapbox, and more — in Tokyo, Osaka, Kyoto, and remote.',
-  openGraph: {
-    title: 'Tech Jobs in Japan | Stapply',
-    description:
-      'Curated tech and AI jobs in Japan — Tokyo, Osaka, Kyoto, and remote roles from top companies. Updated daily.',
-    type: 'website',
-    url: PAGE_URL,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Tech Jobs in Japan | Stapply',
-    description:
-      'Curated tech and AI jobs in Japan — Tokyo, Osaka, Kyoto, and remote roles from top companies.',
-  },
-  alternates: {
-    canonical: PAGE_URL,
-    languages: {
-      en: PAGE_URL,
-      ja: `${BASE}/ja`,
-      'x-default': PAGE_URL,
-    },
-  },
 };
 
 export default async function JapanHubPage() {
@@ -72,24 +41,6 @@ export default async function JapanHubPage() {
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 16);
-
-  const breadcrumbData = generateBreadcrumbSchema([
-    { name: 'Home', url: BASE },
-    { name: 'Japan', url: PAGE_URL },
-  ]);
-
-  const collectionSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Tech Jobs in Japan',
-    description: `${japanJobs.length} tech and AI jobs across Japan from top companies`,
-    url: PAGE_URL,
-    inLanguage: 'en',
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: japanJobs.length,
-    },
-  };
 
   const faqs = [
     {
@@ -117,28 +68,8 @@ export default async function JapanHubPage() {
     },
   ];
 
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    inLanguage: 'en',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-
   return (
     <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-      <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(breadcrumbData)}
-      </Script>
-      <Script id="collection-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(collectionSchema)}
-      </Script>
-      <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(faqSchema)}
-      </Script>
       <PageHeader />
 
       <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">
@@ -262,11 +193,6 @@ export default async function JapanHubPage() {
           </dl>
         </section>
 
-        <section className="text-[12px] text-white/40">
-          <Link href="/md" className="text-white/40 hover:text-white/60 no-underline">
-            Browse all markdown exports
-          </Link>
-        </section>
       </main>
     </div>
   );

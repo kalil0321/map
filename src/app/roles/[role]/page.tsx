@@ -1,17 +1,14 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
   generateRoleSlug,
   generateCompanySlug,
   generateLocationSlug,
-  generateJobSlug,
   slugify,
 } from '@/lib/slug-utils';
 import { groupRoles, extractBaseRole, normalizeRole, getRoleStats } from '@/utils/role-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
@@ -41,65 +38,18 @@ export async function generateMetadata({ params }: { params: Promise<{ role: str
     if (matchingJobs.length === 0) {
       return {
         title: 'Role Not Found | Stapply',
-        description: 'This role page could not be found.',
-        keywords: [
-          'tech jobs',
-          'tech job alerts',
-          'tech job notify',
-          'all companies',
-          'tech companies',
-          'tech job search',
-        ],
       };
     }
 
     const jobCount = matchingJobs.length;
-    const locations = new Set(matchingJobs.map(job => job.location));
-    const companies = new Set(matchingJobs.map(job => job.company));
     const title = `${roleDisplayName} Jobs (${jobCount}) | Stapply`;
-    const description = `Find ${jobCount} ${roleDisplayName} job${jobCount === 1 ? '' : 's'} across ${locations.size} location${locations.size === 1 ? '' : 's'} at ${companies.size} compan${companies.size === 1 ? 'y' : 'ies'}. Explore ${roleDisplayName} opportunities at tech companies on Stapply's interactive job map.`;
-    const pageUrl = `https://map.stapply.ai/roles/${roleSlug}`;
 
     return {
       title,
-      description,
-      keywords: [
-        `${roleDisplayName} jobs`,
-        `${roleDisplayName} careers`,
-        'tech jobs',
-        'tech job alerts',
-        'tech job notify',
-        'all companies',
-        'tech companies',
-        'tech job search',
-      ],
-      openGraph: {
-        title,
-        description,
-        type: 'website',
-        url: pageUrl,
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-      },
-      alternates: {
-        canonical: pageUrl,
-      },
     };
   } catch (error) {
     return {
       title: 'Role Not Found | Stapply',
-      description: 'This role page could not be found.',
-      keywords: [
-        'tech jobs',
-        'tech job alerts',
-        'tech job notify',
-        'all companies',
-        'tech companies',
-        'tech job search',
-      ],
     };
   }
 }
@@ -133,40 +83,6 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
     const locations = Array.from(new Set(matchingJobs.map(job => job.location)));
     const companies = Array.from(new Set(matchingJobs.map(job => job.company)));
 
-    // Generate breadcrumb structured data
-    const pageUrl = `https://map.stapply.ai/roles/${roleSlug}`;
-    const rolesPageUrl = 'https://map.stapply.ai/roles';
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'Home', url: 'https://map.stapply.ai' },
-      { name: 'Roles', url: rolesPageUrl },
-      { name: roleDisplayName, url: pageUrl },
-    ]);
-
-    // Build an ItemList of real job URLs (previously this emitted corrupt
-    // slugs that didn't match our real routes).
-    const itemList = matchingJobs.slice(0, 50).map((job, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      url: `https://map.stapply.ai/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
-      name: `${job.title} — ${job.company}`,
-    }));
-
-    const collectionPageSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: `${roleDisplayName} Jobs`,
-      description: `Browse ${matchingJobs.length} ${roleDisplayName} job openings`,
-      url: pageUrl,
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: matchingJobs.length,
-        itemListElement: itemList,
-      },
-    };
-
-    // Related roles for internal linking — siblings in our role taxonomy that
-    // users searching this role often consider next. Google rewards tight
-    // topical clusters.
     const relatedRoles = getRoleStats(allJobs)
       .filter((r) => r.count >= 5 && r.baseRole !== roleDisplayName)
       .slice(0, 12);
@@ -189,8 +105,6 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       .sort((a, b) => b[1] - a[1])
       .slice(0, 12);
 
-    // FAQ schema + visible FAQ give the page a shot at rich results and
-    // provide real content for crawlers beyond the job list.
     const faqs = [
       {
         q: `How many ${roleDisplayName} jobs are currently open?`,
@@ -216,39 +130,8 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       },
     ];
 
-    const faqSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqs.map((item) => ({
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      })),
-    };
-
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-        <Script
-          id="breadcrumb-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(collectionPageSchema)}
-        </Script>
-        <Script
-          id="role-faq-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(faqSchema)}
-        </Script>
         <PageHeader />
 
         {/* Content */}
@@ -369,11 +252,6 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             </section>
           )}
 
-          <section className="text-[12px] text-white/40">
-            <Link href={`/md/roles/${roleSlug}`} className="text-white/40 hover:text-white/60 no-underline">
-              View as markdown
-            </Link>
-          </section>
         </main>
       </div>
     );
@@ -429,5 +307,3 @@ function RoleNotFound() {
     </div>
   );
 }
-
-

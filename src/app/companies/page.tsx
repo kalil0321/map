@@ -7,42 +7,6 @@ import { CompaniesList } from '@/components/companies-list';
 
 export const metadata: Metadata = {
     title: 'Tech Companies Directory | Stapply',
-    description: 'Browse all tech companies and their job openings on Stapply.',
-    keywords: [
-        'tech companies',
-        'tech companies directory',
-        'all tech companies',
-        'tech company list',
-        'tech job companies',
-        'AI companies',
-        'software companies',
-        'startup companies',
-        'tech job search',
-        'company directory',
-        'tech careers',
-        'tech job notify',
-        'tech job alerts',
-    ],
-    openGraph: {
-        title: 'Tech Companies Directory | Stapply',
-        description: 'Browse all tech companies and their job openings on Stapply.',
-        type: 'website',
-        url: 'https://map.stapply.ai/companies',
-        images: [
-            {
-                url: 'https://map.stapply.ai/api/og/companies',
-                width: 1200,
-                height: 630,
-                alt: 'Tech companies directory',
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'Tech Companies Directory | Stapply',
-        description: 'Browse all tech companies and their job openings on Stapply.',
-        images: ['https://map.stapply.ai/api/og/companies'],
-    },
 };
 
 export default async function CompaniesDirectoryPage() {
@@ -145,4 +109,3 @@ export default async function CompaniesDirectoryPage() {
         );
     }
 }
-

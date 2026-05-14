@@ -4,29 +4,6 @@ import { SavedJobsContent } from './saved-jobs-content';
 
 export const metadata: Metadata = {
   title: 'Saved Jobs | Stapply',
-  description: 'View and manage your saved job opportunities from top tech companies.',
-  keywords: [
-    'saved jobs',
-    'tech jobs',
-    'tech job alerts',
-    'tech job notify',
-    'all companies',
-    'tech companies',
-    'tech job search',
-    'job bookmarks',
-    'tech job favorites',
-  ],
-  openGraph: {
-    title: 'Saved Jobs | Stapply',
-    description: 'View and manage your saved job opportunities from top tech companies.',
-    type: 'website',
-    url: 'https://map.stapply.ai/saved-jobs',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Saved Jobs | Stapply',
-    description: 'View and manage your saved job opportunities from top tech companies.',
-  },
 };
 
 export default function SavedJobsPage() {

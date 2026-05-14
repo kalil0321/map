@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
@@ -12,20 +11,12 @@ import {
 } from '@/utils/japan-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateCompanySlug, generateRoleSlug } from '@/lib/slug-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
-
-// Japan city pages. Tokyo, Osaka, Kyoto, etc. Targets "{city} tech jobs",
-// "AI jobs {city}", "{city} software engineer jobs". These are narrow but
-// high-intent queries where Stapply is likely the only English-friendly
-// aggregator ranking.
 
 export const revalidate = 3600;
 
 type Params = { city: string };
-
-const BASE = 'https://map.stapply.ai';
 
 export function generateStaticParams() {
   return JAPAN_CITIES.map((city) => ({ city }));
@@ -38,23 +29,10 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
   const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
   const jobs = filterJapanCityJobs(allJobs, city);
-  const pageUrl = `${BASE}/japan/${city}`;
   const title = `Tech Jobs in ${display.en} (${jobs.length}) — AI & Engineering | Stapply`;
-  const description = `${jobs.length} open tech, AI, and engineering roles in ${display.en}, Japan. Refreshed daily from top companies. English-friendly and remote options included.`;
 
   return {
     title,
-    description,
-    openGraph: { title, description, url: pageUrl, type: 'website' },
-    twitter: { card: 'summary_large_image', title, description },
-    alternates: {
-      canonical: pageUrl,
-      languages: {
-        en: pageUrl,
-        ja: `${BASE}/ja/${city}-kyujin`,
-        'x-default': pageUrl,
-      },
-    },
   };
 }
 
@@ -66,8 +44,6 @@ export default async function JapanCityPage({ params }: { params: Promise<Params
   const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
   const jobs = filterJapanCityJobs(allJobs, city);
   if (jobs.length === 0) notFound();
-
-  const pageUrl = `${BASE}/japan/${city}`;
 
   const companies = Array.from(
     jobs.reduce<Map<string, number>>((acc, job) => {
@@ -92,25 +68,6 @@ export default async function JapanCityPage({ params }: { params: Promise<Params
     .filter((s) => s.slug !== city)
     .slice(0, 6);
 
-  const breadcrumbData = generateBreadcrumbSchema([
-    { name: 'Home', url: BASE },
-    { name: 'Japan', url: `${BASE}/japan` },
-    { name: display.en, url: pageUrl },
-  ]);
-
-  const collectionSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Tech Jobs in ${display.en}`,
-    description: `${jobs.length} open tech jobs in ${display.en}, Japan`,
-    url: pageUrl,
-    inLanguage: 'en',
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: jobs.length,
-    },
-  };
-
   const faqs = [
     {
       q: `How many tech jobs are open in ${display.en} right now?`,
@@ -129,28 +86,8 @@ export default async function JapanCityPage({ params }: { params: Promise<Params
     },
   ];
 
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    inLanguage: 'en',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-
   return (
     <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-      <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(breadcrumbData)}
-      </Script>
-      <Script id="collection-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(collectionSchema)}
-      </Script>
-      <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(faqSchema)}
-      </Script>
       <PageHeader />
 
       <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">

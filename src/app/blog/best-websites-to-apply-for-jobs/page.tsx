@@ -4,17 +4,6 @@ import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
   title: 'Best Websites to Apply for Jobs in 2026: Complete Comparison',
-  description: 'Comprehensive comparison of the best job search websites including LinkedIn, Indeed, Glassdoor, and Stapply. Find the right platform for your tech career with our detailed analysis of features, pros, cons, and pricing.',
-  alternates: {
-    canonical: 'https://map.stapply.ai/blog/best-websites-to-apply-for-jobs',
-  },
-  openGraph: {
-    title: 'Best Websites to Apply for Jobs in 2026: Complete Comparison',
-    description: 'Compare LinkedIn, Indeed, Glassdoor, AngelList, and Stapply. Find the best job search platform for your tech career.',
-    type: 'article',
-    publishedTime: '2026-01-25',
-    authors: ['Stapply'],
-  },
 };
 
 export default function BestJobWebsitesPost() {

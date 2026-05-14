@@ -3,11 +3,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
-  title: 'Stapply Blog - Job Search Tips, Tech Career Advice & Hiring Insights',
-  description: 'Expert advice on job searching, applying to tech companies, and navigating the modern job market. Learn about AI careers, remote work, and opportunities in Japan.',
-  alternates: {
-    canonical: 'https://map.stapply.ai/blog',
-  },
+  title: 'Stapply Blog',
 };
 
 export default function BlogPage() {

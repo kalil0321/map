@@ -4,25 +4,6 @@ import { AppliedJobsContent } from './applied-jobs-content';
 
 export const metadata: Metadata = {
   title: 'Applied Jobs | Stapply',
-  description: 'Track the jobs you have applied to from top tech companies.',
-  keywords: [
-    'applied jobs',
-    'job applications',
-    'job tracking',
-    'tech jobs',
-    'tech job search',
-  ],
-  openGraph: {
-    title: 'Applied Jobs | Stapply',
-    description: 'Track the jobs you have applied to from top tech companies.',
-    type: 'website',
-    url: 'https://map.stapply.ai/applied-jobs',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Applied Jobs | Stapply',
-    description: 'Track the jobs you have applied to from top tech companies.',
-  },
 };
 
 export default function AppliedJobsPage() {

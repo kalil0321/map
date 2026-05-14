@@ -22,7 +22,7 @@ export default function JobRedirect({ url }: JobRedirectProps) {
   }, [url, router]);
 
   // Show a loading state while redirecting
-  // Meta refresh is handled via metadata in page.tsx for SEO
+  // Let the client-side fallback redirect handle old URLs.
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
       <div className="text-center">
@@ -32,4 +32,3 @@ export default function JobRedirect({ url }: JobRedirectProps) {
     </div>
   );
 }
-

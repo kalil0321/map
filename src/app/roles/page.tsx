@@ -1,40 +1,12 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { generateRoleSlug } from '@/lib/slug-utils';
 import { getRoleStats } from '@/utils/role-utils';
 import { PageHeader } from '@/components/page-header';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'Browse Jobs by Role | Stapply',
-  description: 'Explore tech jobs by role type. Find software engineer, data scientist, product manager, and more job openings at tech companies worldwide.',
-  keywords: [
-    'tech jobs by role',
-    'software engineer jobs',
-    'data scientist jobs',
-    'product manager jobs',
-    'tech job roles',
-    'job titles',
-    'tech careers',
-    'tech job search',
-    'role-based job search',
-  ],
-  openGraph: {
-    title: 'Browse Jobs by Role | Stapply',
-    description: 'Explore tech jobs by role type. Find software engineer, data scientist, product manager, and more job openings.',
-    type: 'website',
-    url: 'https://map.stapply.ai/roles',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Browse Jobs by Role | Stapply',
-    description: 'Explore tech jobs by role type. Find software engineer, data scientist, product manager, and more job openings.',
-  },
-  alternates: {
-    canonical: 'https://map.stapply.ai/roles',
-  },
 };
 
 export const dynamic = 'force-dynamic';
@@ -44,51 +16,8 @@ export default async function RolesPage() {
     const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
     const roleStats = getRoleStats(allJobs);
 
-    // Generate breadcrumb structured data
-    const pageUrl = 'https://map.stapply.ai/roles';
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'Home', url: 'https://map.stapply.ai' },
-      { name: 'Roles', url: pageUrl },
-    ]);
-
-    // Generate CollectionPage structured data
-    const collectionPageSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: 'Jobs by Role',
-      description: 'Browse tech jobs organized by role type',
-      url: pageUrl,
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: roleStats.length,
-        itemListElement: roleStats.slice(0, 50).map((stat, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          item: {
-            '@type': 'Thing',
-            name: stat.baseRole,
-            url: `https://map.stapply.ai/roles/${generateRoleSlug(stat.baseRole)}`,
-          },
-        })),
-      },
-    };
-
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-        <Script
-          id="breadcrumb-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(collectionPageSchema)}
-        </Script>
         <PageHeader />
 
         {/* Content */}
@@ -200,5 +129,4 @@ export default async function RolesPage() {
     );
   }
 }
-
 

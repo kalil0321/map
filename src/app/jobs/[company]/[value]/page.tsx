@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { generateCompanySlug } from '@/lib/slug-utils';
-import { generateJobPostingSchema, generateBreadcrumbSchema } from '@/lib/structured-data';
-import Script from 'next/script';
 import { PageHeader } from '@/components/page-header';
 import { AppliedJobButton } from '@/components/applied-job-button';
 import { formatSalary } from '@/utils/salary-format';
@@ -13,7 +11,6 @@ import { loadJobData } from '@/utils/job-data-loader';
 
 import { JobDescriptionClientWrapper } from '@/components/job-description-wrapper';
 import type { JobMarker } from '@/types';
-import { StapplyLogo } from '@/components/logo';
 
 export const revalidate = 3600;
 
@@ -27,28 +24,12 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
         if (!jobData) {
             return {
                 title: 'Job Not Found | Stapply',
-                description: 'This job posting could not be found.',
-                keywords: [
-                    'tech jobs',
-                    'tech job alerts',
-                    'tech job notify',
-                    'all companies',
-                    'tech companies',
-                    'tech job search',
-                ],
             };
         }
 
         const { job } = jobData;
 
-        const [salaryInfo, dbDetails] = await Promise.all([
-            Promise.resolve(formatSalary(job)),
-            fetchJobDetailsFromDb(job.ats_id, job.url),
-        ]);
-
-        const descriptionText = (dbDetails?.description ?? job.description ?? '').replace(/\s+/g, ' ').trim();
-        const descriptionSnippet =
-            descriptionText.length > 220 ? `${descriptionText.slice(0, 220).trimEnd()}...` : descriptionText;
+        const salaryInfo = formatSalary(job);
 
         const isDataCenterRole =
             /\bdata center\b/i.test(job.title) ||
@@ -61,63 +42,12 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
 
         const title = `${titleCore}${salaryInfo ? ` - ${salaryInfo}` : ''} | Stapply`;
 
-        const baseDescription = salaryInfo
-            ? `Apply for ${job.title} at ${job.company} in ${job.location}. ${salaryInfo}. Explore jobs at tech companies on Stapply's interactive job map.`
-            : `Apply for ${job.title} at ${job.company} in ${job.location}. Explore jobs at tech companies on Stapply's interactive job map.`;
-        const description = descriptionSnippet ? `${baseDescription} ${descriptionSnippet}` : baseDescription;
-        const jobUrl = `https://map.stapply.ai/jobs/${companySlug}/${value}`;
-        const ogImageUrl = `https://map.stapply.ai/api/og/job?company=${encodeURIComponent(companySlug)}&value=${encodeURIComponent(value)}`;
-
         return {
             title,
-            description,
-            keywords: [
-                `${job.title} jobs`,
-                `${job.company} jobs`,
-                'tech jobs',
-                'tech job alerts',
-                'tech job notify',
-                'all companies',
-                'tech companies',
-                'tech job search',
-                `${job.location} tech jobs`,
-            ],
-            openGraph: {
-                title,
-                description,
-                type: 'website',
-                url: jobUrl,
-                images: [
-                    {
-                        url: ogImageUrl,
-                        width: 1200,
-                        height: 630,
-                        alt: `${job.title} at ${job.company} - ${job.location}`,
-                    },
-                ],
-            },
-            twitter: {
-                card: 'summary_large_image',
-                title,
-                description,
-                images: [ogImageUrl],
-            },
-            alternates: {
-                canonical: jobUrl, // Our URL, not external ATS
-            },
         };
     } catch (error) {
         return {
             title: 'Job Not Found | Stapply',
-            description: 'This job posting could not be found.',
-            keywords: [
-                'tech jobs',
-                'tech job alerts',
-                'tech job notify',
-                'all companies',
-                'tech companies',
-                'tech job search',
-            ],
         };
     }
 }
@@ -158,32 +88,8 @@ export default async function JobPage({ params }: { params: Promise<{ company: s
                 })
                 : null);
 
-        const jobUrl = `https://map.stapply.ai/jobs/${companySlug}/${value}`;
-        const companyPageUrl = `https://map.stapply.ai/jobs/${companySlug}`;
-        const structuredData = generateJobPostingSchema(enrichedJob, jobUrl);
-        const breadcrumbData = generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://map.stapply.ai' },
-            { name: enrichedJob.company, url: companyPageUrl },
-            { name: enrichedJob.title, url: jobUrl },
-        ]);
-
         return (
             <div className="h-screen bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif] overflow-y-auto">
-                <Script
-                    id="job-posting-schema"
-                    type="application/ld+json"
-                    strategy="beforeInteractive"
-                >
-                    {JSON.stringify(structuredData)}
-                </Script>
-                <Script
-                    id="breadcrumb-schema"
-                    type="application/ld+json"
-                    strategy="beforeInteractive"
-                >
-                    {JSON.stringify(breadcrumbData)}
-                </Script>
-
                 <PageHeader />
 
                 {/* Content */}

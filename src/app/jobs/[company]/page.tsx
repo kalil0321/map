@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
@@ -12,7 +11,6 @@ import {
 } from '@/lib/slug-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateStaticHeatmapUrl } from '@/utils/map-helpers';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 import { isInternshipJob } from '@/utils/internship-utils';
@@ -29,78 +27,19 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
         if (matchingJobs.length === 0) {
             return {
                 title: 'Company Jobs | Stapply',
-                description: 'Explore jobs at tech companies on Stapply.',
-                keywords: [
-                    'tech jobs',
-                    'tech job alerts',
-                    'tech job notify',
-                    'all companies',
-                    'tech companies',
-                    'tech job search',
-                ],
             };
         }
 
         const companyName = matchingJobs[0].company;
         const jobCount = matchingJobs.length;
-        const locations = new Set(matchingJobs.map(job => job.location));
         const title = `${companyName} Jobs (${jobCount}) | Stapply`;
-        const description = `View ${jobCount} open roles at ${companyName} across ${locations.size} locations on Stapply's interactive job map.`;
-        const companySlug = generateCompanySlug(companyName);
-        const pageUrl = `https://map.stapply.ai/jobs/${companySlug}`;
-
-        // Generate OG image URL using the new route
-        const ogImageUrl = `https://map.stapply.ai/api/og/company?company=${encodeURIComponent(companySlug)}`;
 
         return {
             title,
-            description,
-            keywords: [
-                `${companyName} jobs`,
-                `${companyName} careers`,
-                'tech jobs',
-                'tech job alerts',
-                'tech job notify',
-                'all companies',
-                'tech companies',
-                'tech job search',
-            ],
-            openGraph: {
-                title,
-                description,
-                url: pageUrl,
-                type: 'website',
-                images: [
-                    {
-                        url: ogImageUrl,
-                        width: 1200,
-                        height: 630,
-                        alt: `${companyName} job locations map`,
-                    },
-                ],
-            },
-            twitter: {
-                card: 'summary_large_image',
-                title,
-                description,
-                images: [ogImageUrl],
-            },
-            alternates: {
-                canonical: pageUrl,
-            },
         };
     } catch (error) {
         return {
             title: 'Company Jobs | Stapply',
-            description: 'Explore jobs at tech companies on Stapply.',
-            keywords: [
-                'tech jobs',
-                'tech job alerts',
-                'tech job notify',
-                'all companies',
-                'tech companies',
-                'tech job search',
-            ],
         };
     }
 }
@@ -126,13 +65,6 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
             900,
             360
         );
-
-        // Generate breadcrumb structured data
-        const pageUrl = `https://map.stapply.ai/jobs/${companySlug}`;
-        const breadcrumbData = generateBreadcrumbSchema([
-            { name: 'Home', url: 'https://map.stapply.ai' },
-            { name: companyName, url: pageUrl },
-        ]);
 
         const topLocations = Array.from(
           matchingJobs.reduce<Map<string, number>>((acc, job) => {
@@ -182,32 +114,8 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
           },
         ].filter(Boolean) as { q: string; a: string }[];
 
-        const faqSchema = {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqs.map((item) => ({
-            '@type': 'Question',
-            name: item.q,
-            acceptedAnswer: { '@type': 'Answer', text: item.a },
-          })),
-        };
-
         return (
             <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-                <Script
-                    id="breadcrumb-schema"
-                    type="application/ld+json"
-                    strategy="beforeInteractive"
-                >
-                    {JSON.stringify(breadcrumbData)}
-                </Script>
-                <Script
-                    id="company-faq-schema"
-                    type="application/ld+json"
-                    strategy="beforeInteractive"
-                >
-                    {JSON.stringify(faqSchema)}
-                </Script>
                 <PageHeader />
 
                 {/* Content */}
@@ -316,11 +224,6 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                       </dl>
                     </section>
 
-                    <section className="text-[12px] text-white/40">
-                      <Link href={`/md/company/${companySlug}`} className="text-white/40 hover:text-white/60 no-underline">
-                        View as markdown
-                      </Link>
-                    </section>
                 </main>
             </div>
         );

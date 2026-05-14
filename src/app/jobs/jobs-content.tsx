@@ -83,18 +83,6 @@ export function JobsContent() {
               {jobs.length.toLocaleString()} open roles
             </span>
           )}
-          <Link
-            href="/ja/openai-kyujin"
-            className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/80 no-underline hover:bg-white/10 hover:border-white/20 transition-colors"
-          >
-            OpenAI 求人
-          </Link>
-          <Link
-            href="/ja/anthropic-kyujin"
-            className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/80 no-underline hover:bg-white/10 hover:border-white/20 transition-colors"
-          >
-            Anthropic 求人
-          </Link>
         </div>
       </section>
 

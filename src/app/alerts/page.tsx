@@ -8,35 +8,6 @@ import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 
 export const metadata: Metadata = {
   title: 'Job Alerts | Stapply',
-  description: 'Set up custom job alerts and get notified about new opportunities from top tech companies.',
-  keywords: [
-    'tech job alerts',
-    'tech job notify',
-    'job alerts',
-    'job notifications',
-    'tech job notifications',
-    'job alert system',
-    'tech company job alerts',
-    'AI job alerts',
-    'software engineering job alerts',
-    'tech job finder',
-    'job alert setup',
-    'custom job alerts',
-    'tech job updates',
-    'job notification service',
-    'tech companies',
-  ],
-  openGraph: {
-    title: 'Job Alerts | Stapply',
-    description: 'Set up custom job alerts and get notified about new opportunities from top tech companies.',
-    type: 'website',
-    url: 'https://map.stapply.ai/alerts',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Job Alerts | Stapply',
-    description: 'Set up custom job alerts and get notified about new opportunities from top tech companies.',
-  },
 };
 
 export default async function AlertsPage() {

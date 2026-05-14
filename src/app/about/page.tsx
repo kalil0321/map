@@ -4,10 +4,6 @@ import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
   title: 'About Stapply',
-  description: 'Stapply is the interactive job map that helps you discover and apply to jobs at tech companies worldwide, with deep coverage of Japan\'s AI hubs.',
-  alternates: {
-    canonical: 'https://map.stapply.ai/about',
-  },
 };
 
 export default function AboutPage() {

@@ -27,46 +27,42 @@ const INTERNSHIP_KEYWORDS = [
   '2025 graduate',
   '2026 graduate',
   'early career',
-  'campus',
   'undergraduate',
   'phd intern',
   'masters intern',
   'mba intern',
 ];
 
+function normalizeTitleForKeywordMatch(title: string): string {
+  return ` ${title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')} `;
+}
+
+function normalizeKeyword(keyword: string): string {
+  return normalizeTitleForKeywordMatch(keyword).trim();
+}
+
 /**
- * Keywords that should NOT trigger internship matching (false positives)
+ * Check if a job title indicates an internship or early career position.
+ * Keywords are matched as full normalized words/phrases so "intern" does not
+ * match false positives like "internal" or "international".
  */
-const EXCLUDE_KEYWORDS = [
-  'internal',
-  'international',
-  'internal tools',
-  'internal systems',
-  'internal audit',
-];
+export function isInternshipTitle(title: string): boolean {
+  const normalizedTitle = normalizeTitleForKeywordMatch(title);
+
+  return INTERNSHIP_KEYWORDS.some((keyword) =>
+    normalizedTitle.includes(` ${normalizeKeyword(keyword)} `),
+  );
+}
 
 /**
  * Check if a job title indicates an internship or early career position
  */
 export function isInternshipJob(job: JobMarker): boolean {
-  const titleLower = job.title.toLowerCase();
-  
-  // Check for exclusion keywords first
-  for (const exclude of EXCLUDE_KEYWORDS) {
-    // Only exclude if the word is standalone (not part of "intern" pattern)
-    if (titleLower.includes(exclude) && !titleLower.includes('intern')) {
-      return false;
-    }
-  }
-  
-  // Check for internship keywords
-  for (const keyword of INTERNSHIP_KEYWORDS) {
-    if (titleLower.includes(keyword)) {
-      return true;
-    }
-  }
-  
-  return false;
+  return isInternshipTitle(job.title);
 }
 
 /**

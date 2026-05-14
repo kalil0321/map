@@ -1,19 +1,16 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
   generateLocationSlug,
   generateCompanySlug,
   generateRoleSlug,
-  generateJobSlug,
   slugify,
 } from '@/lib/slug-utils';
 import { groupLocations, extractLocationBase, normalizeLocation, getLocationStats } from '@/utils/location-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateStaticHeatmapUrl } from '@/utils/map-helpers';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
@@ -44,65 +41,18 @@ export async function generateMetadata({ params }: { params: Promise<{ location:
     if (matchingJobs.length === 0) {
       return {
         title: 'Location Not Found | Stapply',
-        description: 'This location page could not be found.',
-        keywords: [
-          'tech jobs',
-          'tech job alerts',
-          'tech job notify',
-          'all companies',
-          'tech companies',
-          'tech job search',
-        ],
       };
     }
 
     const jobCount = matchingJobs.length;
-    const roles = new Set(matchingJobs.map(job => job.title));
-    const companies = new Set(matchingJobs.map(job => job.company));
     const title = `Jobs in ${locationDisplayName} (${jobCount}) | Stapply`;
-    const description = `Find ${jobCount} tech job${jobCount === 1 ? '' : 's'} in ${locationDisplayName} across ${roles.size} role${roles.size === 1 ? '' : 's'} at ${companies.size} compan${companies.size === 1 ? 'y' : 'ies'}. Explore job opportunities in ${locationDisplayName} on Stapply's interactive job map.`;
-    const pageUrl = `https://map.stapply.ai/locations/${locationSlug}`;
 
     return {
       title,
-      description,
-      keywords: [
-        `jobs in ${locationDisplayName}`,
-        `${locationDisplayName} tech jobs`,
-        'tech jobs',
-        'tech job alerts',
-        'tech job notify',
-        'all companies',
-        'tech companies',
-        'tech job search',
-      ],
-      openGraph: {
-        title,
-        description,
-        type: 'website',
-        url: pageUrl,
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-      },
-      alternates: {
-        canonical: pageUrl,
-      },
     };
   } catch (error) {
     return {
       title: 'Location Not Found | Stapply',
-      description: 'This location page could not be found.',
-      keywords: [
-        'tech jobs',
-        'tech job alerts',
-        'tech job notify',
-        'all companies',
-        'tech companies',
-        'tech job search',
-      ],
     };
   }
 }
@@ -144,36 +94,6 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
     const staticMapUrl = coordinates.length > 0
       ? generateStaticHeatmapUrl(coordinates, 900, 360)
       : null;
-
-    // Generate breadcrumb structured data
-    const pageUrl = `https://map.stapply.ai/locations/${locationSlug}`;
-    const locationsPageUrl = 'https://map.stapply.ai/locations';
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'Home', url: 'https://map.stapply.ai' },
-      { name: 'Locations', url: locationsPageUrl },
-      { name: locationDisplayName, url: pageUrl },
-    ]);
-
-    // ItemList with real job URLs.
-    const itemList = matchingJobs.slice(0, 50).map((job, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      url: `https://map.stapply.ai/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
-      name: `${job.title} — ${job.company}`,
-    }));
-
-    const collectionPageSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: `Jobs in ${locationDisplayName}`,
-      description: `Browse ${matchingJobs.length} job openings in ${locationDisplayName}`,
-      url: pageUrl,
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: matchingJobs.length,
-        itemListElement: itemList,
-      },
-    };
 
     const topCompanies = Array.from(
       matchingJobs.reduce<Map<string, number>>((acc, job) => {
@@ -219,39 +139,8 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
       },
     ];
 
-    const faqSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqs.map((item) => ({
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      })),
-    };
-
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-        <Script
-          id="breadcrumb-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(collectionPageSchema)}
-        </Script>
-        <Script
-          id="location-faq-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(faqSchema)}
-        </Script>
         <PageHeader />
 
         {/* Content */}
@@ -382,11 +271,6 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
             </section>
           )}
 
-          <section className="text-[12px] text-white/40">
-            <Link href={`/md/locations/${locationSlug}`} className="text-white/40 hover:text-white/60 no-underline">
-              View as markdown
-            </Link>
-          </section>
         </main>
       </div>
     );
@@ -442,5 +326,3 @@ function LocationNotFound() {
     </div>
   );
 }
-
-

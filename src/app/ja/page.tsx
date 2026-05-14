@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
@@ -10,7 +9,6 @@ import {
 } from '@/utils/japan-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateCompanySlug } from '@/lib/slug-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
@@ -19,34 +17,9 @@ import { PageHeader } from '@/components/page-header';
 export const revalidate = 3600;
 
 const BASE = 'https://map.stapply.ai';
-const PAGE_URL = `${BASE}/ja`;
 
 export const metadata: Metadata = {
   title: '日本のテック求人 — AI・機械学習・ソフトウェアエンジニア | Stapply',
-  description:
-    '日本国内のテック・AI関連求人を毎日更新。OpenAI、Anthropic、Google、Microsoft、Mapbox などトップ企業の東京・大阪・京都・福岡・リモートの最新ポジションを一覧でチェック。',
-  openGraph: {
-    title: '日本のテック求人 | Stapply',
-    description:
-      '東京・大阪・京都などのテック・AI求人を一覧表示。海外のトップ企業の採用情報を毎日更新。',
-    type: 'website',
-    url: PAGE_URL,
-    locale: 'ja_JP',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: '日本のテック求人 | Stapply',
-    description:
-      '東京・大阪・京都などのテック・AI求人を一覧表示。海外のトップ企業の採用情報を毎日更新。',
-  },
-  alternates: {
-    canonical: PAGE_URL,
-    languages: {
-      ja: PAGE_URL,
-      en: `${BASE}/japan`,
-      'x-default': `${BASE}/japan`,
-    },
-  },
 };
 
 export default async function JaHubPage() {
@@ -70,24 +43,6 @@ export default async function JaHubPage() {
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 16);
-
-  const breadcrumbData = generateBreadcrumbSchema([
-    { name: 'ホーム', url: BASE },
-    { name: '日本の求人', url: PAGE_URL },
-  ]);
-
-  const collectionSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: '日本のテック求人',
-    description: `日本国内のテック・AI関連求人 ${japanJobs.length} 件`,
-    url: PAGE_URL,
-    inLanguage: 'ja',
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: japanJobs.length,
-    },
-  };
 
   const faqs = [
     {
@@ -115,28 +70,8 @@ export default async function JaHubPage() {
     },
   ];
 
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    inLanguage: 'ja',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-
   return (
     <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]" lang="ja">
-      <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(breadcrumbData)}
-      </Script>
-      <Script id="collection-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(collectionSchema)}
-      </Script>
-      <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(faqSchema)}
-      </Script>
       <PageHeader />
 
       <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">

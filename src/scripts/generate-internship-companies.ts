@@ -32,16 +32,10 @@ const INTERNSHIP_KEYWORDS = [
   '2025 graduate',
   '2026 graduate',
   'early career',
-  'campus',
   'undergraduate',
   'phd intern',
   'masters intern',
   'mba intern',
-];
-
-const EXCLUDE_KEYWORDS = [
-  'internal',
-  'international',
 ];
 
 function slugify(text: string): string {
@@ -53,22 +47,24 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+function normalizeTitleForKeywordMatch(title: string): string {
+  return ` ${title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')} `;
+}
+
+function normalizeKeyword(keyword: string): string {
+  return normalizeTitleForKeywordMatch(keyword).trim();
+}
+
 function isInternshipJob(title: string): boolean {
-  const titleLower = title.toLowerCase();
-  
-  for (const exclude of EXCLUDE_KEYWORDS) {
-    if (titleLower.includes(exclude) && !titleLower.includes('intern')) {
-      return false;
-    }
-  }
-  
-  for (const keyword of INTERNSHIP_KEYWORDS) {
-    if (titleLower.includes(keyword)) {
-      return true;
-    }
-  }
-  
-  return false;
+  const normalizedTitle = normalizeTitleForKeywordMatch(title);
+
+  return INTERNSHIP_KEYWORDS.some((keyword) =>
+    normalizedTitle.includes(` ${normalizeKeyword(keyword)} `),
+  );
 }
 
 interface Job {

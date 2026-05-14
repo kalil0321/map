@@ -1,12 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { getCompanyInternships, getCompanyDisplayName, getQualifyingInternshipCompanies } from '@/utils/internship-utils';
-import { generateBreadcrumbSchema, generateJobPostingSchema } from '@/lib/structured-data';
-import { slugify, generateJobSlug } from '@/lib/slug-utils';
+import { slugify } from '@/lib/slug-utils';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
@@ -27,61 +25,18 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     if (!companyName) {
       return {
         title: 'Internships Not Found | Stapply',
-        description: 'This internship page could not be found.',
       };
     }
 
     const internships = getCompanyInternships(allJobs, companySlug);
-    const locations = new Set(internships.map(j => j.location));
-    
     const title = `${companyName} Internships ${nextYear} (${internships.length} Positions)`;
-    const description = `Explore ${internships.length} internship and new graduate opportunities at ${companyName} across ${locations.size} locations. Apply now for summer ${nextYear} internships in software engineering, AI, and more.`;
-    const pageUrl = `https://map.stapply.ai/internships/${companySlug}`;
-    const ogImageUrl = `https://map.stapply.ai/api/og/internships?company=${encodeURIComponent(companySlug)}`;
 
     return {
       title,
-      description,
-      keywords: [
-        `${companyName} internship`,
-        `${companyName} internship ${nextYear}`,
-        `${companyName} summer internship`,
-        `${companyName} new grad`,
-        `${companyName} software engineering intern`,
-        `${companyName} careers`,
-        `tech internship ${nextYear}`,
-        'software engineering internship',
-        'ai internship',
-        'machine learning internship',
-      ],
-      openGraph: {
-        title,
-        description,
-        url: pageUrl,
-        type: 'website',
-        images: [
-          {
-            url: ogImageUrl,
-            width: 1200,
-            height: 630,
-            alt: `${companyName} Internships ${nextYear}`,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: [ogImageUrl],
-      },
-      alternates: {
-        canonical: pageUrl,
-      },
     };
   } catch {
     return {
       title: 'Internships Not Found | Stapply',
-      description: 'This internship page could not be found.',
     };
   }
 }
@@ -118,54 +73,6 @@ export default async function CompanyInternshipsPage({ params }: { params: Promi
     }
 
     const locations = Array.from(new Set(internships.map(j => j.location)));
-    const pageUrl = `https://map.stapply.ai/internships/${companySlug}`;
-
-    // Breadcrumb schema
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'Home', url: 'https://map.stapply.ai' },
-      { name: 'Internships', url: 'https://map.stapply.ai/internships' },
-      { name: companyName, url: pageUrl },
-    ]);
-
-    // CollectionPage with JobPosting items
-    const jobPostings = internships.slice(0, 50).map((job) => {
-      const jobSlug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
-      return {
-        '@type': 'JobPosting',
-        title: job.title,
-        description: `${job.title} internship at ${job.company} in ${job.location}`,
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: job.company,
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: job.location,
-          },
-        },
-        employmentType: 'INTERN',
-        url: `https://map.stapply.ai/jobs/${jobSlug}`,
-      };
-    });
-
-    const collectionSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: `${companyName} Internships ${nextYear}`,
-      description: `Browse ${internships.length} internship openings at ${companyName}`,
-      url: pageUrl,
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: internships.length,
-        itemListElement: jobPostings.map((posting, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          item: posting,
-        })),
-      },
-    };
 
     // Get other qualifying companies for internal linking
     const qualifyingCompanies = getQualifyingInternshipCompanies(allJobs, 4);
@@ -175,12 +82,6 @@ export default async function CompanyInternshipsPage({ params }: { params: Promi
 
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-        <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script id="collection-schema" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(collectionSchema)}
-        </Script>
         <PageHeader />
 
         <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-6 pt-1">

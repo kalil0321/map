@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
@@ -10,18 +9,10 @@ import {
   generateRoleSlug,
   generateCompanySlug,
   generateLocationSlug,
-  generateJobSlug,
   slugify,
 } from '@/lib/slug-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
-
-// Programmatic by-role internship pages. Search Console data shows we already
-// rank around position 2 for long-tail queries like "software engineer intern",
-// "machine learning engineering internship", "summer intern", and similar —
-// but we send users to a generic company list. Dedicated role pages give
-// higher topical relevance and a cleaner CTR story in Google Jobs.
 
 export const revalidate = 3600;
 
@@ -54,8 +45,7 @@ async function findRole(roleSlug: string) {
   return { allJobs, match, allInterns: interns };
 }
 
-// Pre-build pages only for internship role clusters with enough volume to be
-// useful (and to keep the sitemap tight).
+// Pre-build pages only for internship role clusters with enough volume to be useful.
 export async function generateStaticParams() {
   try {
     const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
@@ -84,14 +74,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { match } = found;
   const count = match.jobs.length;
   const title = `${match.display} Internships ${nextYear} (${count}) — Stapply`;
-  const description = `Browse ${count} open ${match.display.toLowerCase()} internship${count === 1 ? '' : 's'} across top tech companies for ${nextYear}. Summer, PhD, and new-grad tracks. Refreshed daily.`;
-  const pageUrl = `${BASE}/internships/role/${roleSlug}`;
   return {
     title,
-    description,
-    openGraph: { title, description, url: pageUrl, type: 'website' },
-    twitter: { card: 'summary_large_image', title, description },
-    alternates: { canonical: pageUrl },
   };
 }
 
@@ -103,7 +87,6 @@ export default async function InternshipsByRolePage({ params }: { params: Promis
 
   const { allJobs, match, allInterns } = found;
   const { display: roleDisplay, jobs: roleJobs } = match;
-  const pageUrl = `${BASE}/internships/role/${roleSlug}`;
 
   const companies = Array.from(
     roleJobs.reduce<Map<string, number>>((acc, job) => {
@@ -118,32 +101,6 @@ export default async function InternshipsByRolePage({ params }: { params: Promis
       return acc;
     }, new Map()),
   ).sort((a, b) => b[1] - a[1]);
-
-  const breadcrumbData = generateBreadcrumbSchema([
-    { name: 'Home', url: BASE },
-    { name: 'Internships', url: `${BASE}/internships` },
-    { name: `${roleDisplay} Internships`, url: pageUrl },
-  ]);
-
-  const itemList = roleJobs.slice(0, 50).map((job, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    url: `${BASE}/jobs/${generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url)}`,
-    name: `${job.title} — ${job.company}`,
-  }));
-
-  const collectionSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `${roleDisplay} Internships ${nextYear}`,
-    description: `Browse ${roleJobs.length} ${roleDisplay.toLowerCase()} internship openings at top tech companies for ${nextYear}.`,
-    url: pageUrl,
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: roleJobs.length,
-      itemListElement: itemList,
-    },
-  };
 
   const faqs = [
     {
@@ -170,16 +127,6 @@ export default async function InternshipsByRolePage({ params }: { params: Promis
     },
   ];
 
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-
   const siblingRoles = getRoleStats(allJobs)
     .filter((r) => r.count >= 5 && r.baseRole !== roleDisplay)
     .slice(0, 10);
@@ -188,15 +135,6 @@ export default async function InternshipsByRolePage({ params }: { params: Promis
 
   return (
     <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-      <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(breadcrumbData)}
-      </Script>
-      <Script id="collection-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(collectionSchema)}
-      </Script>
-      <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(faqSchema)}
-      </Script>
       <PageHeader />
 
       <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">

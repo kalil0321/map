@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useQueryState, parseAsInteger } from 'nuqs';
-import Link from 'next/link';
 import { JobMap } from '@/components/job-map';
 import { LoadingScreen } from '@/components/loading-screen';
 import { ChatInterface } from '@/components/chat-interface';
@@ -269,8 +268,6 @@ function HomeContent() {
 
   return (
     <>
-      {/* Hidden heading for SEO */}
-      <h1 className="sr-only">Stapply Map - Explore Jobs at Tech Companies Worldwide</h1>
       <JobMap
         jobs={jobMarkers}
         mapboxToken={MAPBOX_TOKEN}
@@ -308,12 +305,6 @@ function HomeContent() {
         onClose={() => setIsAlertModalOpen(false)}
         jobs={jobMarkers}
       />
-      <Link
-        href="/jobs"
-        className="fixed bottom-1 left-2 z-40 text-[10px] text-white/5 hover:text-white/60 transition-colors font-mono no-underline mix-blend-difference"
-      >
-        Directory
-      </Link>
     </>
   );
 }

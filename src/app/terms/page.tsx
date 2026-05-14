@@ -4,10 +4,6 @@ import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for using Stapply, the interactive job map for tech companies.',
-  alternates: {
-    canonical: 'https://map.stapply.ai/terms',
-  },
 };
 
 export default function TermsPage() {

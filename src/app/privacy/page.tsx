@@ -4,10 +4,6 @@ import { PageHeader } from '@/components/page-header';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Stapply\'s privacy policy explains how we collect, use, and protect your information.',
-  alternates: {
-    canonical: 'https://map.stapply.ai/privacy',
-  },
 };
 
 export default function PrivacyPage() {

@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
@@ -12,7 +11,6 @@ import {
 } from '@/utils/japan-utils';
 import { extractBaseRole } from '@/utils/role-utils';
 import { generateCompanySlug } from '@/lib/slug-utils';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 import { AllJobsList } from '@/components/all-jobs-list';
 import { PageHeader } from '@/components/page-header';
 
@@ -20,15 +18,14 @@ import { PageHeader } from '@/components/page-header';
 //   - slug がJapanese cityなら都市別の求人一覧
 //   - slug が会社名なら日本の求人 + グローバルの求人一覧
 //
-// 既存の静的ページ (/ja/openai-kyujin, /ja/anthropic-kyujin) は
-// Next.js の優先順位ルールにより引き続きそちらが使われる。
+// Company pages for OpenAI and Anthropic are intentionally blocked here.
 
 export const revalidate = 3600;
 
 type Params = { slug: string };
 
-const BASE = 'https://map.stapply.ai';
 const SUFFIX = '-kyujin';
+const BLOCKED_COMPANY_SLUGS = new Set(['openai', 'anthropic']);
 
 function stripSuffix(slug: string): { base: string; hasSuffix: boolean } {
   if (slug.endsWith(SUFFIX)) {
@@ -41,13 +38,11 @@ export async function generateStaticParams(): Promise<Params[]> {
   const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
   const cityParams: Params[] = JAPAN_CITIES.map((c) => ({ slug: `${c}${SUFFIX}` }));
 
-  // Companies with ≥1 Japan job — pre-build those, skip the two existing
-  // static files so they don't collide.
+  // Companies with ≥1 Japan job.
   const japanJobs = filterJapanJobs(allJobs);
   const companies = new Set(japanJobs.map((j) => generateCompanySlug(j.company)));
-  const staticOverrides = new Set(['openai', 'anthropic']);
   const companyParams: Params[] = Array.from(companies)
-    .filter((c) => !staticOverrides.has(c))
+    .filter((c) => !BLOCKED_COMPANY_SLUGS.has(c))
     .map((c) => ({ slug: `${c}${SUFFIX}` }));
 
   return [...cityParams, ...companyParams];
@@ -56,23 +51,15 @@ export async function generateStaticParams(): Promise<Params[]> {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const { base } = stripSuffix(slug);
-  const pageUrl = `${BASE}/ja/${slug}`;
+  if (BLOCKED_COMPANY_SLUGS.has(base)) return { title: 'Not Found | Stapply' };
 
   if (JAPAN_CITIES.includes(base)) {
     const display = JAPAN_CITY_DISPLAY[base];
     const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
     const jobs = filterJapanCityJobs(allJobs, base);
     const title = `${display.ja}のテック求人（${jobs.length}件）— AI・エンジニア | Stapply`;
-    const description = `${display.ja}（${display.en}）で募集中のテック・AI求人を ${jobs.length} 件掲載。グローバル企業・スタートアップの最新ポジションを毎日更新。`;
     return {
       title,
-      description,
-      openGraph: { title, description, url: pageUrl, type: 'website', locale: 'ja_JP' },
-      twitter: { card: 'summary_large_image', title, description },
-      alternates: {
-        canonical: pageUrl,
-        languages: { ja: pageUrl, en: `${BASE}/japan/${base}`, 'x-default': `${BASE}/japan/${base}` },
-      },
     };
   }
 
@@ -83,17 +70,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const companyName = companyJobs[0].company;
   const japanCompanyJobs = companyJobs.filter((j) => filterJapanJobs([j]).length > 0);
   const title = `${companyName}の求人・採用情報（${japanCompanyJobs.length}件の日本求人）| Stapply`;
-  const description = `${companyName} の最新求人・採用情報を Stapply で確認。日本勤務・リモート勤務の AI やエンジニアリング関連ポジションを毎日更新しています。`;
 
   return {
     title,
-    description,
-    openGraph: { title, description, url: pageUrl, type: 'website', locale: 'ja_JP' },
-    twitter: { card: 'summary_large_image', title, description },
-    alternates: {
-      canonical: pageUrl,
-      languages: { ja: pageUrl, en: `${BASE}/jobs/${base}`, 'x-default': `${BASE}/jobs/${base}` },
-    },
   };
 }
 
@@ -101,9 +80,9 @@ export default async function JaSlugPage({ params }: { params: Promise<Params> }
   const { slug } = await params;
   const { base, hasSuffix } = stripSuffix(slug);
   if (!hasSuffix) notFound();
+  if (BLOCKED_COMPANY_SLUGS.has(base)) notFound();
 
   const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
-  const pageUrl = `${BASE}/ja/${slug}`;
 
   // City branch
   if (JAPAN_CITIES.includes(base)) {
@@ -128,12 +107,6 @@ export default async function JaSlugPage({ params }: { params: Promise<Params> }
       .sort((a, b) => b[1] - a[1])
       .slice(0, 12);
 
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'ホーム', url: BASE },
-      { name: '日本の求人', url: `${BASE}/ja` },
-      { name: `${display.ja}の求人`, url: pageUrl },
-    ]);
-
     const faqs = [
       {
         q: `${display.ja}で現在募集中のテック求人はどのくらいありますか？`,
@@ -152,25 +125,8 @@ export default async function JaSlugPage({ params }: { params: Promise<Params> }
       },
     ];
 
-    const faqSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      inLanguage: 'ja',
-      mainEntity: faqs.map((item) => ({
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      })),
-    };
-
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]" lang="ja">
-        <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(faqSchema)}
-        </Script>
         <PageHeader />
 
         <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">
@@ -280,12 +236,6 @@ export default async function JaSlugPage({ params }: { params: Promise<Params> }
   const companyName = companyJobs[0].company;
   const japanCompanyJobs = companyJobs.filter((j) => filterJapanJobs([j]).length > 0);
 
-  const breadcrumbData = generateBreadcrumbSchema([
-    { name: 'ホーム', url: BASE },
-    { name: '日本の求人', url: `${BASE}/ja` },
-    { name: `${companyName}の求人`, url: pageUrl },
-  ]);
-
   const faqs = [
     {
       q: `${companyName}は日本で採用していますか？`,
@@ -304,27 +254,10 @@ export default async function JaSlugPage({ params }: { params: Promise<Params> }
     },
   ];
 
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    inLanguage: 'ja',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-
   const jobsToShow = japanCompanyJobs.length > 0 ? japanCompanyJobs : companyJobs;
 
   return (
     <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]" lang="ja">
-      <Script id="breadcrumb-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(breadcrumbData)}
-      </Script>
-      <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
-        {JSON.stringify(faqSchema)}
-      </Script>
       <PageHeader />
 
       <main className="max-w-4xl mx-auto px-5 pb-8 md:pb-12 space-y-8 pt-1">

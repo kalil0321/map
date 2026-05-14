@@ -1,40 +1,12 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import { generateLocationSlug } from '@/lib/slug-utils';
 import { getLocationStats } from '@/utils/location-utils';
 import { PageHeader } from '@/components/page-header';
-import { generateBreadcrumbSchema } from '@/lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'Browse Jobs by Location | Stapply',
-  description: 'Explore tech jobs by location. Find remote jobs, jobs in San Francisco, New York, Seattle, and more cities worldwide.',
-  keywords: [
-    'tech jobs by location',
-    'remote jobs',
-    'san francisco tech jobs',
-    'new york tech jobs',
-    'seattle tech jobs',
-    'tech job locations',
-    'tech careers by city',
-    'tech job search',
-    'location-based job search',
-  ],
-  openGraph: {
-    title: 'Browse Jobs by Location | Stapply',
-    description: 'Explore tech jobs by location. Find remote jobs, jobs in San Francisco, New York, Seattle, and more cities worldwide.',
-    type: 'website',
-    url: 'https://map.stapply.ai/locations',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Browse Jobs by Location | Stapply',
-    description: 'Explore tech jobs by location. Find remote jobs, jobs in San Francisco, New York, Seattle, and more cities worldwide.',
-  },
-  alternates: {
-    canonical: 'https://map.stapply.ai/locations',
-  },
 };
 
 export const dynamic = 'force-dynamic';
@@ -44,51 +16,8 @@ export default async function LocationsPage() {
     const allJobs = await loadJobsWithCoordinatesServer('/ai.csv');
     const locationStats = getLocationStats(allJobs);
 
-    // Generate breadcrumb structured data
-    const pageUrl = 'https://map.stapply.ai/locations';
-    const breadcrumbData = generateBreadcrumbSchema([
-      { name: 'Home', url: 'https://map.stapply.ai' },
-      { name: 'Locations', url: pageUrl },
-    ]);
-
-    // Generate CollectionPage structured data
-    const collectionPageSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: 'Jobs by Location',
-      description: 'Browse tech jobs organized by location',
-      url: pageUrl,
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: locationStats.length,
-        itemListElement: locationStats.slice(0, 50).map((stat, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          item: {
-            '@type': 'Place',
-            name: stat.baseLocation,
-            url: `https://map.stapply.ai/locations/${generateLocationSlug(stat.baseLocation)}`,
-          },
-        })),
-      },
-    };
-
     return (
       <div className="h-screen overflow-y-auto bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif]">
-        <Script
-          id="breadcrumb-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(breadcrumbData)}
-        </Script>
-        <Script
-          id="collection-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-        >
-          {JSON.stringify(collectionPageSchema)}
-        </Script>
         <PageHeader />
 
         {/* Content */}
@@ -200,5 +129,4 @@ export default async function LocationsPage() {
     );
   }
 }
-
 
