@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { generateCompanySlug } from '@/lib/slug-utils';
 import { PageHeader } from '@/components/page-header';
 import { AppliedJobButton } from '@/components/applied-job-button';
 import { formatSalary } from '@/utils/salary-format';
@@ -135,14 +134,9 @@ export default async function JobPage({ params }: { params: Promise<{ company: s
                         {/* Metadata */}
                         <div className="flex flex-col gap-3">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:text-[15px] text-white/70">
-                                <Link
-                                    href={`/company/${generateCompanySlug(job.company)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-white/90 hover:text-white transition-colors no-underline font-medium uppercase"
-                                >
+                                <span className="text-white/90 font-medium uppercase">
                                     {job.company}
-                                </Link>
+                                </span>
                                 <span className="text-white/30 hidden sm:inline">·</span>
                                 <span className="w-full sm:w-auto">{job.location}</span>
                                 {postedLabel && (
@@ -210,12 +204,6 @@ function JobNotFound() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                        <Link
-                            href="/jobs"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
-                        >
-                            Browse Jobs
-                        </Link>
                         <Link
                             href="/"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"

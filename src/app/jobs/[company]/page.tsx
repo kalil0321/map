@@ -3,10 +3,6 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 import {
-  generateJobSlug,
-  generateCompanySlug,
-  generateRoleSlug,
-  generateLocationSlug,
   slugify,
 } from '@/lib/slug-utils';
 import { extractBaseRole } from '@/utils/role-utils';
@@ -56,7 +52,6 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
         }
 
         const companyName = matchingJobs[0].company;
-        const companySlug = generateCompanySlug(companyName);
         const locations = Array.from(new Set(matchingJobs.map(job => job.location)));
 
         // Generate heatmap with all job locations
@@ -95,7 +90,7 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
           internshipCount > 0
             ? {
                 q: `Does ${companyName} have internships or new-grad positions?`,
-                a: `Yes. ${internshipCount} of the current ${companyName} openings are internships, new-grad, or early-career roles. See the /internships/${companySlug} page for the filtered list.`,
+                a: `Yes. ${internshipCount} of the current ${companyName} openings are internships, new-grad, or early-career roles.`,
               }
             : null,
           {
@@ -137,12 +132,9 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                                 {locations.length} location{locations.length === 1 ? '' : 's'}
                             </span>
                             {internshipCount > 0 && (
-                              <Link
-                                href={`/internships/${companySlug}`}
-                                className="px-3 py-1 rounded-full bg-white/5 border border-white/10 no-underline text-white/80 hover:bg-white/10"
-                              >
-                                {internshipCount} internships →
-                              </Link>
+                              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/80">
+                                {internshipCount} internships
+                              </span>
                             )}
                         </div>
                     </section>
@@ -179,13 +171,12 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                         </h2>
                         <div className="flex flex-wrap gap-2">
                           {topLocations.map(([loc, count]) => (
-                            <Link
+                            <span
                               key={loc}
-                              href={`/locations/${generateLocationSlug(loc)}`}
-                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80"
                             >
                               {loc} ({count})
-                            </Link>
+                            </span>
                           ))}
                         </div>
                       </section>
@@ -198,13 +189,12 @@ export default async function JobsPage({ params }: { params: Promise<Params> }) 
                         </h2>
                         <div className="flex flex-wrap gap-2">
                           {topRoles.map(([role, count]) => (
-                            <Link
+                            <span
                               key={role}
-                              href={`/roles/${generateRoleSlug(role)}`}
-                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80 hover:bg-white/10 no-underline"
+                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[13px] text-white/80"
                             >
                               {role} ({count})
-                            </Link>
+                            </span>
                           ))}
                         </div>
                       </section>
@@ -262,14 +252,14 @@ function CompanyNotFound() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                         <Link
-                            href="/jobs"
+                            href="/companies"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
                         >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                                 <polyline points="9 22 9 12 15 12 15 22" />
                             </svg>
-                            Browse Jobs
+                            Browse Companies
                         </Link>
                         <Link
                             href="/"

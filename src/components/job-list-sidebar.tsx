@@ -5,7 +5,7 @@ import Link from 'next/link';
 import clsx from 'clsx';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { JobMarker } from '@/types';
-import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
+import { generateJobSlug } from '@/lib/slug-utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatJobDate, getJobDate } from '@/utils/date-format';
 import { formatExperience, formatSalary } from '@/utils/salary-format';
@@ -126,15 +126,9 @@ const JobItem = memo(function JobItem({
               </span>
             )}
           </div>
-          <Link
-            href={`/company/${generateCompanySlug(job.company)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-[11px] lg:text-[12px] xl:text-[13px] font-medium text-white/50 uppercase tracking-wider no-underline hover:text-blue-400 transition-colors block w-fit mt-0.5"
-          >
+          <span className="text-[11px] lg:text-[12px] xl:text-[13px] font-medium text-white/50 uppercase tracking-wider block w-fit mt-0.5">
             {job.company}
-          </Link>
+          </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {formatJobDate(job) && (
@@ -376,9 +370,7 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
           <div className="flex items-center justify-between px-5 py-4">
             <div>
               <h2 className="text-[15px] lg:text-[16px] xl:text-[17px] font-medium text-white m-0 tracking-[-0.01em]">
-                <Link href="/jobs" className="hover:text-white/80 transition-colors">
-                  All Jobs
-                </Link>
+                All Jobs
               </h2>
               <p className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 mt-1 m-0">
                 {processedJobs.length.toLocaleString()} jobs • {companiesCount} companies • {locationsCount} locations
@@ -526,12 +518,9 @@ export function JobListSidebar({ jobs, isOpen, onClose, onJobClick, filteredJobs
         {processedJobs.length > 0 && (
           <div className="shrink-0 border-t border-white/10 bg-black/30 px-5 py-3">
             <div className="text-[11px] lg:text-[12px] xl:text-[13px] text-white/50 text-center">
-              <Link
-                href="/jobs"
-                className="hover:text-white/70 transition-colors"
-              >
+              <span>
                 Showing {processedJobs.length.toLocaleString()} of {jobs.length.toLocaleString()} jobs
-              </Link>
+              </span>
             </div>
           </div>
         )}

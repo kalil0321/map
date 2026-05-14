@@ -8,7 +8,6 @@ import Supercluster from 'supercluster';
 import type { JobMarker } from '@/types';
 import { StatsOverlay } from './stats-overlay';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
-import { generateCompanySlug } from '@/lib/slug-utils';
 import { formatExperience } from '@/utils/salary-format';
 import { SaveJobButton } from '@/components/save-job-button';
 import { AppliedJobButton } from '@/components/applied-job-button';
@@ -618,14 +617,9 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                 </div>
 
                 <div className="flex items-center gap-2 mb-2 h-3.5 overflow-hidden text-ellipsis whitespace-nowrap">
-                  <Link
-                    href={`/company/${generateCompanySlug(popupJob.company)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] uppercase tracking-wider text-white/40 font-medium no-underline hover:text-blue-400 transition-colors"
-                  >
+                  <span className="text-[11px] uppercase tracking-wider text-white/40 font-medium">
                     {popupJob.company}
-                  </Link>
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 mb-4 pr-5">

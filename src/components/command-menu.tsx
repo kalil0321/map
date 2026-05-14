@@ -12,11 +12,6 @@ interface CommandMenuProps {
 
 const menuItems = [
   {
-    href: '/jobs',
-    label: 'Jobs',
-    description: 'Browse all job listings',
-  },
-  {
     href: '/companies',
     label: 'Companies',
     description: 'View all companies',

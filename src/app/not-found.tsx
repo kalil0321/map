@@ -28,16 +28,8 @@ export default function NotFound() {
                     >
                         Go to Home
                     </Link>
-
-                    <Link
-                        href="/jobs"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
-                    >
-                        Browse Jobs
-                    </Link>
                 </div>
             </div>
         </div>
     );
 }
-

@@ -7,7 +7,7 @@ import { useSavedJobs } from '@/hooks/use-saved-jobs';
 import { SaveJobButton } from '@/components/save-job-button';
 import { AppliedJobButton } from '@/components/applied-job-button';
 import { UnavailableJobCard } from '@/components/unavailable-job-card';
-import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
+import { generateJobSlug } from '@/lib/slug-utils';
 import { formatJobDate, getJobDate } from '@/utils/date-format';
 import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -249,12 +249,6 @@ export function SavedJobsList({ jobs }: SavedJobsListProps) {
             </p>
             <div className="flex gap-3">
               <Link
-                href="/jobs"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
-              >
-                Browse Jobs
-              </Link>
-              <Link
                 href="/"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
               >
@@ -330,12 +324,9 @@ export function SavedJobsList({ jobs }: SavedJobsListProps) {
 
                       {/* Company */}
                       <div className="text-[13px] md:text-[15px] text-white/70 mb-1.5">
-                        <Link
-                          href={`/jobs/${generateCompanySlug(job.company)}`}
-                          className="no-underline hover:text-white transition-colors uppercase"
-                        >
+                        <span className="uppercase">
                           {job.company}
-                        </Link>
+                        </span>
                       </div>
 
                       {/* Location and Salary */}
