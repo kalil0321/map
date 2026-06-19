@@ -1,49 +1,37 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { StapplyLogo } from './logo';
-import { SocialLinks } from './social-links';
-import { CommandMenu } from './command-menu';
+import { StapplyLockup } from './logo';
+import { IconNavLinks } from './brand';
 
 interface PageHeaderProps {
     rightAction?: React.ReactNode;
-    showSocialLinks?: boolean;
+    /** Show the icon-nav (Companies / Jobs / Map / GitHub) on the right. Default true. */
+    showNav?: boolean;
 }
 
-export function PageHeader({ rightAction, showSocialLinks = true }: PageHeaderProps) {
-    const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
-
-    const closeCommandMenu = useCallback(() => {
-        setIsCommandMenuOpen(false);
-    }, []);
-
+/* Page chrome — 1:1 with the landing/viewer HeaderIconNav, in the design
+ * system's dark palette. The logo links home. */
+export function PageHeader({ rightAction, showNav = true }: PageHeaderProps) {
     return (
-        <>
-            <header className="bg-black/30 backdrop-blur-2xl sticky top-0 z-10">
-                <div className="max-w-4xl mx-auto px-5 h-16 flex items-center justify-between">
-                    <button
-                        onClick={() => setIsCommandMenuOpen(true)}
-                        className="text-white/60 hover:text-white transition-colors shrink-0 cursor-pointer bg-transparent border-none p-0"
-                        aria-label="Open command menu"
-                    >
-                        <StapplyLogo size={32} />
-                    </button>
-                    <div className="flex items-center gap-4 shrink-0">
-                        {rightAction && (
-                            <div>
-                                {rightAction}
-                            </div>
-                        )}
-                        {showSocialLinks && <SocialLinks variant="inline" />}
-                    </div>
+        <header className="lab-header sticky top-0 z-50 bg-[color:var(--shell)]/90 backdrop-blur-md px-6 py-3.5 border-b-2 border-dotted border-[color:var(--line-strong)]">
+            <div className="flex items-center justify-between gap-6">
+                <Link
+                    href="/"
+                    aria-label="Stapply home"
+                    className="inline-flex items-center rounded-md transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand)]"
+                >
+                    <StapplyLockup size={20} />
+                </Link>
+                <div className="flex items-center gap-1">
+                    {rightAction && <div className="mr-2">{rightAction}</div>}
+                    {showNav && (
+                        <nav className="hidden md:flex items-center gap-1">
+                            <IconNavLinks />
+                        </nav>
+                    )}
                 </div>
-            </header>
-            <CommandMenu
-                isOpen={isCommandMenuOpen}
-                onClose={closeCommandMenu}
-            />
-        </>
+            </div>
+        </header>
     );
 }
-

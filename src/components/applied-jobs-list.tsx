@@ -11,6 +11,7 @@ import { formatJobDate, getJobDate } from '@/utils/date-format';
 import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { useDebounce } from '@/hooks/use-debounce';
 import { addUtmParams } from '@/utils/url-utils';
+import { matchesSearchTerm } from '@/utils/search-utils';
 import type { JobMarker } from '@/types';
 
 type SortOption = 'applied' | 'title' | 'company' | 'location' | 'recent';
@@ -83,18 +84,13 @@ export function AppliedJobsList({ jobs }: AppliedJobsListProps) {
     let filtered = availableAppliedJobs;
 
     if (debouncedSearchText.trim()) {
-      const searchLower = debouncedSearchText.toLowerCase();
-      const searchTerms = searchLower.split(/\s+/).filter(term => term.length > 0);
+      const searchTerms = debouncedSearchText.toLowerCase().split(/\s+/).filter(term => term.length > 0);
 
       filtered = filtered.filter(job => {
-        const titleLower = job.title.toLowerCase();
-        const companyLower = job.company.toLowerCase();
-        const locationLower = job.location.toLowerCase();
-
         return searchTerms.every(term =>
-          titleLower.includes(term) ||
-          companyLower.includes(term) ||
-          locationLower.includes(term)
+          matchesSearchTerm(job.title, term) ||
+          matchesSearchTerm(job.company, term) ||
+          matchesSearchTerm(job.location, term)
         );
       });
     }
@@ -282,6 +278,12 @@ export function AppliedJobsList({ jobs }: AppliedJobsListProps) {
               Mark jobs as applied to track your progress here
             </p>
             <div className="flex gap-3">
+              <Link
+                href="/jobs"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"
+              >
+                Browse Jobs
+              </Link>
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 text-white rounded-full border border-white/12 text-[13px] font-medium no-underline transition-[border-color,background-color] duration-200 hover:bg-white/12 hover:border-white/20"

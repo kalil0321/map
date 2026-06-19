@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { fredoka, urbanist } from "./fonts";
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -42,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fredoka.variable} ${urbanist.variable}`}>
       <head>
         {/* put this in the <head> */}
         {process.env.NODE_ENV === "development" && (

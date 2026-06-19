@@ -1,5 +1,6 @@
 import type { JobMarker } from '@/types';
 import { fuzzyMatch } from './fuzzy-match';
+import { matchesSearchTerm, parseBooleanQuery } from './search-utils';
 
 export interface LocationStats {
     location: string;
@@ -99,56 +100,10 @@ export function filterJobsByCompany(jobs: JobMarker[], companyQuery: string): Jo
 }
 
 /**
- * Parse boolean query with OR/AND operators and comma separators
- * Examples:
- *   "software engineer OR internship" -> OR logic
- *   "software engineer AND python" -> AND logic
- *   "software engineer, intern, applied ai" -> OR logic (comma-separated)
- *   "software engineer" -> AND logic (default)
- */
-function parseBooleanQuery(query: string): { type: 'OR' | 'AND'; terms: string[] } {
-    const normalized = query.toLowerCase().trim();
-
-    // Check for OR operator (case-insensitive)
-    if (/\s+or\s+/i.test(normalized)) {
-        const terms = normalized.split(/\s+or\s+/i).map(t => t.trim()).filter(t => t.length > 0);
-        return { type: 'OR', terms };
-    }
-
-    // Check for AND operator (case-insensitive)
-    if (/\s+and\s+/i.test(normalized)) {
-        const terms = normalized.split(/\s+and\s+/i).map(t => t.trim()).filter(t => t.length > 0);
-        return { type: 'AND', terms };
-    }
-
-    // Check for comma separators (treat as OR logic)
-    if (/,/.test(normalized)) {
-        const terms = normalized.split(',').map(t => t.trim()).filter(t => t.length > 0);
-        // Only use OR logic if we have multiple terms after splitting
-        if (terms.length > 1) {
-            return { type: 'OR', terms };
-        }
-    }
-
-    // Default: split by spaces and use AND logic
-    const terms = normalized.split(/\s+/).filter(t => t.length > 0);
-    return { type: 'AND', terms };
-}
-
-/**
  * Check if a job title matches a single search term (with fuzzy matching)
  */
 function matchesTerm(title: string, term: string): boolean {
-    const normalizedTitle = title.toLowerCase();
-    const normalizedTerm = term.toLowerCase().trim();
-
-    // Try exact substring match first (faster)
-    if (normalizedTitle.includes(normalizedTerm)) {
-        return true;
-    }
-
-    // Try fuzzy match
-    return fuzzyMatch(normalizedTitle, normalizedTerm, 0.6);
+    return matchesSearchTerm(title, term, { fuzzy: true });
 }
 
 /**
@@ -168,11 +123,6 @@ export function searchJobsByTitle(jobs: JobMarker[], titleQuery: string): JobMar
 
     return jobs.filter(job => {
         const title = job.title.toLowerCase();
-
-        // First try fuzzy matching the entire query as a phrase
-        if (fuzzyMatch(title, query, 0.7)) {
-            return true;
-        }
 
         // Apply boolean logic
         if (type === 'OR') {
@@ -317,4 +267,3 @@ export function buildDataContext(jobs: JobMarker[], viewState?: { latitude: numb
         } : undefined,
     };
 }
-

@@ -1,23 +1,30 @@
 import { Metadata } from 'next';
 import { PageHeader } from '@/components/page-header';
-import { SavedJobsContent } from './saved-jobs-content';
+import { Footer } from '@/components/footer';
+import { SavedJobsList } from '@/components/saved-jobs-list';
+import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
 
 export const metadata: Metadata = {
   title: 'Saved Jobs | Stapply',
 };
 
-export default function SavedJobsPage() {
+export default async function SavedJobsPage() {
+  // Load all jobs for filtering
+  const jobs = await loadJobsWithCoordinatesServer('/ai.csv');
+
   return (
-    <div className="h-screen bg-black text-white font-[system-ui,-apple-system,BlinkMacSystemFont,'Inter',sans-serif] overflow-y-auto">
+    <div className="flex h-screen flex-col overflow-y-auto bg-[var(--bg)] text-[var(--ink)]">
       <PageHeader />
 
-      <main className="max-w-4xl mx-auto px-5 pt-1 pb-8">
+      <main className="mx-auto w-full max-w-5xl px-6 pb-16 pt-8">
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.04em]">SAVED JOBS</h1>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Saved jobs</h1>
         </div>
 
-        <SavedJobsContent />
+        <SavedJobsList jobs={jobs} />
       </main>
+
+      <Footer />
     </div>
   );
 }

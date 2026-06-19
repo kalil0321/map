@@ -6,9 +6,9 @@ import Link from 'next/link';
 import clsx from 'clsx';
 import Supercluster from 'supercluster';
 import type { JobMarker } from '@/types';
-import { StatsOverlay } from './stats-overlay';
 import type { MapControlCallbacks, ViewState } from '@/utils/map-control';
-import { formatExperience } from '@/utils/salary-format';
+import { generateCompanySlug, generateJobSlug } from '@/lib/slug-utils';
+import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { SaveJobButton } from '@/components/save-job-button';
 import { AppliedJobButton } from '@/components/applied-job-button';
 import { addUtmParams } from '@/utils/url-utils';
@@ -23,9 +23,6 @@ interface JobMapProps {
   onMapControlReady?: (callbacks: MapControlCallbacks) => void;
   filteredJobs?: JobMarker[] | null;
   onViewStateChange?: (viewState: ViewState) => void;
-  onOpenFilters?: () => void;
-  onOpenJobList?: () => void;
-  onOpenAlert?: () => void;
 }
 
 // Use supercluster's built-in types
@@ -89,7 +86,7 @@ function preClusterExactDuplicates(jobs: JobMarker[]): {
 }
 
 export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
-  ({ jobs, mapboxToken, totalJobs, isLoadingMore, loadingProgress, onMapControlReady, filteredJobs, onViewStateChange, onOpenFilters, onOpenJobList, onOpenAlert }, ref) => {
+  ({ jobs, mapboxToken, totalJobs, isLoadingMore, loadingProgress, onMapControlReady, filteredJobs, onViewStateChange }, ref) => {
     // Calculate initial view state based on jobs if available
     const getInitialViewState = (): ViewState => {
       if (jobs.length > 0) {
@@ -194,11 +191,6 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
         return [];
       }
     }, [displayJobs.length, viewState.zoom, viewState.longitude, viewState.latitude, superclusterLoaded]);
-
-    const uniqueLocations = useMemo(() => {
-      const locations = new Set(displayJobs.map(job => job.location));
-      return locations.size;
-    }, [displayJobs]);
 
     // Map control callbacks
     const flyTo = useCallback((longitude: number, latitude: number, zoom?: number) => {
@@ -362,18 +354,7 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
 
 
     return (
-      <div className="w-screen h-screen relative">
-        <StatsOverlay
-          totalJobs={totalJobs || jobs.length}
-          displayedJobs={displayJobs.length}
-          totalLocations={uniqueLocations}
-          popupOpen={!!popupJob}
-          onOpenFilters={onOpenFilters}
-          onOpenJobList={onOpenJobList}
-          onOpenAlert={onOpenAlert}
-          hasActiveFilters={filteredJobs !== null}
-        />
-
+      <div className="w-full h-full relative">
         {isLoadingMore && loadingProgress && (
           <div className={clsx(
             'absolute bottom-6 left-1/2 -translate-x-1/2 z-1',
@@ -483,36 +464,30 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                     style={{ width: size, height: size }}
                     onMouseEnter={(e) => {
                       const inner = e.currentTarget.querySelector('.marker-inner') as HTMLElement;
-                      if (inner) inner.style.transform = 'scale(1.15)';
+                      if (inner) inner.style.transform = 'scale(1.1)';
                     }}
                     onMouseLeave={(e) => {
                       const inner = e.currentTarget.querySelector('.marker-inner') as HTMLElement;
                       if (inner) inner.style.transform = 'scale(1)';
                     }}
                   >
-                    {/* Pulsing ring */}
-                    <div
-                      className="absolute -inset-2 rounded-full opacity-20 animate-pulse"
-                      style={{ backgroundColor: color }}
-                    />
-
-                    {/* Main marker */}
+                    {/* Flat, crisp cluster — solid dark core, heat-color ring + count, no glow/pulse */}
                     <div
                       className={clsx(
                         'marker-inner',
-                        'relative w-full h-full rounded-full',
-                        'bg-black/80 flex items-center justify-center',
-                        'font-semibold text-[13px] tabular-nums',
-                        'transition-transform duration-200 ease-in-out',
-                        'shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
+                        'relative grid h-full w-full place-items-center rounded-full',
+                        'bg-[color:var(--paper)] flex items-center justify-center',
+                        'font-semibold tabular-nums',
+                        'transition-transform duration-150 ease-out',
+                        'shadow-[0_2px_6px_rgba(0,0,0,0.5)]'
                       )}
                       style={{
                         border: `2px solid ${color}`,
                         color: color,
-                        boxShadow: `0 0 20px ${color}40, 0 4px 12px rgba(0, 0, 0, 0.4)`,
+                        fontSize: jobCount >= 1000 ? 11 : 13,
                       }}
                     >
-                      {jobCount}
+                      {jobCount >= 1000 ? `${(jobCount / 1000).toFixed(jobCount >= 10000 ? 0 : 1)}k` : jobCount}
                     </div>
                   </div>
                 ) : (
@@ -520,25 +495,23 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
                     className="relative cursor-pointer"
                     onMouseEnter={(e) => {
                       const dot = e.currentTarget.querySelector('.marker-dot') as HTMLElement;
-                      if (dot) dot.style.transform = 'scale(1.3)';
+                      if (dot) dot.style.transform = 'scale(1.25)';
                     }}
                     onMouseLeave={(e) => {
                       const dot = e.currentTarget.querySelector('.marker-dot') as HTMLElement;
                       if (dot) dot.style.transform = 'scale(1)';
                     }}
                   >
-                    {/* Single job marker - minimalist dot */}
+                    {/* Flat single-job dot — solid heat color, thin dark ring, no glow */}
                     <div
-                      className="marker-dot rounded-full border-2 border-black/50 transition-transform duration-200 ease-in-out"
+                      className="marker-dot rounded-full border border-black/60 transition-transform duration-150 ease-out"
                       style={{
                         width: size,
                         height: size,
                         backgroundColor: color,
-                        boxShadow: `0 0 12px ${color}80, 0 2px 8px rgba(0, 0, 0, 0.3)`,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
                       }}
                     />
-                    {/* Inner glow */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white opacity-80" />
                   </div>
                 )}
               </Marker>
@@ -558,107 +531,105 @@ export const JobMap = forwardRef<MapControlCallbacks, JobMapProps>(
             >
               <div className={clsx(
                 'popup-content',
-                'bg-black/90 backdrop-blur-[20px]',
-                'border border-white/10 rounded-xl px-5 pt-5 pb-4',
-                'min-w-[300px] max-w-[360px] w-[300px] h-[280px]',
-                'text-white font-[system-ui,-apple-system,BlinkMacSystemFont,"Inter",sans-serif]',
-                'relative flex flex-col box-border'
+                'bg-[color:var(--paper-2)]/95 backdrop-blur-xl',
+                'rounded-xl p-3.5',
+                'w-[300px]',
+                'font-sans text-[var(--ink)]',
+                'relative flex flex-col box-border',
+                'shadow-[0_12px_40px_rgba(0,0,0,0.5)]'
               )}>
                 {/* Close button */}
                 <button
                   onClick={handleClosePopup}
-                  className={clsx(
-                    'absolute top-3 right-3 z-1',
-                    'bg-white/10 border-none rounded-md',
-                    'w-7 h-7 flex items-center justify-center cursor-pointer',
-                    'text-white/60 text-lg transition-all duration-200',
-                    'hover:bg-white/20 hover:text-white'
-                  )}
+                  aria-label="Close"
+                  className="absolute top-2.5 right-2.5 z-1 grid size-6 place-items-center rounded-md cursor-pointer text-[var(--ink-mute)] transition-colors hover:bg-[var(--paper-3)] hover:text-[var(--ink)]"
                 >
-                  ×
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-3.5">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
                 </button>
 
-                {/* Multiple jobs indicator and navigation - always reserve space */}
-                <div
-                  className={clsx(
-                    'flex items-center justify-between mb-3 pr-8 h-8',
-                    popupJobsAtLocation.length > 1 ? 'visible' : 'invisible'
-                  )}
-                >
-                  <div className="text-[11px] text-white/50 font-medium">
-                    {currentJobIndex + 1} of {popupJobsAtLocation.length} jobs here
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={handlePrevJob}
-                      title="Previous job (←)"
-                      className={clsx(
-                        'bg-white/10 border border-white/20 rounded-md',
-                        'w-8 h-8 flex items-center justify-center cursor-pointer',
-                        'text-white text-base transition-all duration-200',
-                        'hover:bg-blue-500/20 hover:border-blue-500'
-                      )}
-                    >
-                      ←
-                    </button>
-                    <button
-                      onClick={handleNextJob}
-                      title="Next job (→)"
-                      className={clsx(
-                        'bg-white/10 border border-white/20 rounded-md',
-                        'w-8 h-8 flex items-center justify-center cursor-pointer',
-                        'text-white text-base transition-all duration-200',
-                        'hover:bg-blue-500/20 hover:border-blue-500'
-                      )}
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mb-2 h-3.5 overflow-hidden text-ellipsis whitespace-nowrap">
-                  <span className="text-[11px] uppercase tracking-wider text-white/40 font-medium">
-                    {popupJob.company}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 mb-4 pr-5">
-                  <h3 className="m-0 text-lg font-medium text-white leading-snug h-[50px] overflow-hidden line-clamp-2 wrap-break-word">
-                    {popupJob.title}
-                  </h3>
-                  {formatExperience(popupJob.experience) && (
-                    <span className="text-[12px] text-white/50 shrink-0">
-                      {formatExperience(popupJob.experience)}
+                {/* Multiple-jobs nav (only when >1 at this location) */}
+                {popupJobsAtLocation.length > 1 && (
+                  <div className="mb-2.5 flex items-center justify-between pr-7">
+                    <span className="text-[11px] font-medium text-[var(--ink-mute)]">
+                      {currentJobIndex + 1} / {popupJobsAtLocation.length} here
                     </span>
-                  )}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={handlePrevJob}
+                        title="Previous job (←)"
+                        className="grid size-6 place-items-center rounded-md cursor-pointer bg-[var(--paper-3)] text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)]"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5"><path d="m15 18-6-6 6-6" /></svg>
+                      </button>
+                      <button
+                        onClick={handleNextJob}
+                        title="Next job (→)"
+                        className="grid size-6 place-items-center rounded-md cursor-pointer bg-[var(--paper-3)] text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)]"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5"><path d="m9 18 6-6-6-6" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Title + company — same treatment as the All Jobs sidebar rows */}
+                <div className="pr-7">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/jobs/${generateJobSlug(popupJob.title, popupJob.id, popupJob.company, popupJob.ats_id, popupJob.url)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="line-clamp-2 text-[15px] font-medium leading-tight text-[var(--ink)] no-underline transition-colors hover:text-[var(--brand-deep)]"
+                    >
+                      {popupJob.title}
+                    </Link>
+                    {formatExperience(popupJob.experience) && (
+                      <span className="shrink-0 text-[12px] text-[var(--ink-mute)]">{formatExperience(popupJob.experience)}</span>
+                    )}
+                  </div>
+                  <Link
+                    href={`/company/${generateCompanySlug(popupJob.company)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-0.5 block w-fit text-[12px] font-medium uppercase tracking-wider text-[var(--ink-mute)] no-underline transition-colors hover:text-[var(--brand-deep)]"
+                  >
+                    {popupJob.company}
+                  </Link>
                 </div>
 
-                <div className="text-[13px] text-white/50 mb-3 flex items-center gap-1.5 h-5 overflow-hidden text-ellipsis whitespace-nowrap">
-                  <div className="w-1 h-1 rounded-full bg-blue-500 shrink-0" />
-                  {popupJob.location}
+                {/* Location + salary */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+                  <span className="flex min-w-0 items-center gap-1.5 text-[var(--ink-soft)]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span className="truncate">{popupJob.location}</span>
+                  </span>
+                  {formatSalary(popupJob) && (
+                    <span className="shrink-0 font-medium text-[var(--emerald)]">{formatSalary(popupJob)}</span>
+                  )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="mt-3.5 flex items-center gap-2">
                   <Link
                     href={addUtmParams(popupJob.url)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={clsx(
-                      'flex items-center justify-center gap-2 flex-1',
-                      'px-4 py-2 bg-white/8 text-white no-underline rounded-full',
-                      'text-[13px] font-medium border border-white/12',
-                      'transition-[border-color,background-color] duration-200 ease-in-out',
-                      'hover:bg-white/12 hover:border-white/20'
-                    )}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] bg-[var(--brand)] px-4 py-2 text-[13px] font-semibold text-white no-underline transition-colors hover:bg-[var(--brand-deep)]"
                   >
                     View Job
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                       <polyline points="15 3 21 3 21 9" />
                       <line x1="10" y1="14" x2="21" y2="3" />
                     </svg>
                   </Link>
+                  <SaveJobButton atsId={popupJob.ats_id} name={popupJob.title} company={popupJob.company} variant="icon" />
+                  <AppliedJobButton atsId={popupJob.ats_id} name={popupJob.title} company={popupJob.company} variant="icon" />
                 </div>
               </div>
             </Popup>

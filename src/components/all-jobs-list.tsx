@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import clsx from 'clsx';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
 import { formatExperience, formatSalary } from '@/utils/salary-format';
 import { formatJobDate } from '@/utils/date-format';
@@ -13,9 +12,45 @@ import { SaveJobButton } from '@/components/save-job-button';
 import { AppliedJobButton } from '@/components/applied-job-button';
 import { addUtmParams } from '@/utils/url-utils';
 import { fuzzyMatch } from '@/utils/fuzzy-match';
+import { SearchField } from './search-field';
+import { FilterDialog, type FilterState } from './filter-dialog';
+import { isRemoteJob, matchesExperienceLevel, type ExperienceLevel } from '@/utils/job-filters';
 import type { JobMarker } from '@/types';
 
 type Job = JobMarker;
+
+const pill = (active: boolean) =>
+    clsx(
+        'inline-flex cursor-pointer items-center rounded-[var(--radius-pill)] px-3 py-1 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+        active
+            ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
+            : 'bg-[var(--paper-3)] text-[var(--ink-soft)] hover:text-[var(--ink)]',
+    );
+
+const PAGE_SIZE = 50;
+
+const pageBtn = (active: boolean) =>
+    clsx(
+        'inline-flex h-8 min-w-[32px] cursor-pointer items-center justify-center rounded-md px-2 text-[13px] font-medium transition-colors',
+        active
+            ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
+            : 'text-[var(--ink-soft)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
+    );
+
+// Windowed page numbers: 1 … current-1 current current+1 … total
+function buildPageList(current: number, total: number): (number | '…')[] {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const wanted = new Set<number>([1, total, current, current - 1, current + 1]);
+    const sorted = [...wanted].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const out: (number | '…')[] = [];
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) out.push('…');
+        out.push(p);
+        prev = p;
+    }
+    return out;
+}
 
 type SortOption = 'location' | 'title' | 'company' | 'recent' | 'experience' | 'salary';
 
@@ -102,20 +137,18 @@ interface ParsedSearch {
     age: number | null;
     company: string | null;
     location: string | null;
-    excludeTerms: string[];
     generalSearch: string;
 }
 
 function parseSearchText(searchText: string): ParsedSearch {
     if (!searchText?.trim()) {
-        return { age: null, company: null, location: null, excludeTerms: [], generalSearch: '' };
+        return { age: null, company: null, location: null, generalSearch: '' };
     }
 
     let remainingText = searchText;
     let age: number | null = null;
     let company: string | null = null;
     let location: string | null = null;
-    const excludeTerms: string[] = [];
 
     // Extract @age:{number}
     const ageMatch = remainingText.match(/@age:(\d+)/i);
@@ -142,18 +175,10 @@ function parseSearchText(searchText: string): ParsedSearch {
         remainingText = remainingText.replace(/@location:[^@]+?(?=\s*@|\s*$)/gi, '').trim();
     }
 
-    // Extract not:{term} patterns - can appear multiple times
-    const notMatches = remainingText.matchAll(/not:([^\s@]+)/gi);
-    for (const match of notMatches) {
-        excludeTerms.push(match[1].trim().toLowerCase());
-        remainingText = remainingText.replace(/not:[^\s@]+/gi, '').trim();
-    }
-
     return {
         age,
         company: company || null,
         location: location || null,
-        excludeTerms,
         generalSearch: remainingText,
     };
 }
@@ -168,8 +193,15 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
     const debouncedSearchText = useDebounce(localSearchText, 300);
     const [sortBy, setSortBy] = useState<SortOption>('recent');
     const [isPending, startTransition] = useTransition();
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [extra, setExtra] = useState<{
+        companies: string[];
+        locations: string[];
+        remoteOnly: boolean;
+        minSalary: number | null;
+        experience: ExperienceLevel | null;
+    }>({ companies: [], locations: [], remoteOnly: false, minSalary: null, experience: null });
     const hasJobs = jobs.length > 0;
-    const parentRef = useRef<HTMLDivElement>(null);
     const isInternalUpdateRef = useRef(false);
 
     // Pre-compute date timestamps once to avoid repeated Date parsing
@@ -249,15 +281,6 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
             );
         }
 
-        // Apply exclude filter (not: prefix) - exclude jobs with matching terms in title
-        if (parsedSearch.excludeTerms.length > 0) {
-            filtered = filtered.filter(job => {
-                const titleLower = normalizeForSearch(job.title);
-                // Exclude job if title contains any of the exclude terms
-                return !parsedSearch.excludeTerms.some(term => titleLower.includes(term));
-            });
-        }
-
         // Apply general search filter (optimized for performance)
         if (parsedSearch.generalSearch?.trim()) {
             const generalSearchLower = normalizeForSearch(parsedSearch.generalSearch);
@@ -277,6 +300,23 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                     return fuzzyMatch(job.company, term, 0.75);
                 });
             });
+        }
+
+        // Structured filters from the Filter dialog
+        if (extra.companies.length > 0) {
+            filtered = filtered.filter(job => extra.companies.includes(job.company));
+        }
+        if (extra.locations.length > 0) {
+            filtered = filtered.filter(job => extra.locations.includes(job.location));
+        }
+        if (extra.remoteOnly) {
+            filtered = filtered.filter(job => isRemoteJob(job));
+        }
+        if (extra.minSalary != null) {
+            filtered = filtered.filter(job => getSalaryValue(job.salary_summary) >= extra.minSalary!);
+        }
+        if (extra.experience) {
+            filtered = filtered.filter(job => matchesExperienceLevel(job, extra.experience!));
         }
 
         // Sort jobs
@@ -319,29 +359,30 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         }
 
         return sorted;
-    }, [jobsWithTimestamps, parsedSearch, sortBy, ageFilter]);
+    }, [jobsWithTimestamps, parsedSearch, sortBy, ageFilter, extra]);
 
-    // Cache formatted dates to avoid repeated formatting calls
-    const formattedDateCache = useMemo(() => {
-        const cache = new Map<string, string | null>();
-        processedJobs.forEach(job => {
-            const cacheKey = job.ats_id || job.id;
-            if (!cache.has(cacheKey)) {
-                cache.set(cacheKey, formatJobDate(job));
-            }
-        });
-        return cache;
-    }, [processedJobs]);
+    // Pagination — slice the filtered/sorted set (no nested scroll container).
+    const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+    const totalPages = Math.max(1, Math.ceil(processedJobs.length / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(1, page ?? 1), totalPages);
+    const pageJobs = processedJobs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const topRef = useRef<HTMLDivElement>(null);
 
-    // Virtualization for large lists
-    const estimatedItemHeight = hideCompanyName ? 110 : 140;
-    const virtualizer = useVirtualizer({
-        count: processedJobs.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => estimatedItemHeight,
-        overscan: 5, // Render 5 extra items outside viewport
-        measureElement: (element) => element?.getBoundingClientRect().height ?? estimatedItemHeight,
-    });
+    // Reset to page 1 when the result set changes (search / sort / filters).
+    const didMountRef = useRef(false);
+    useEffect(() => {
+        if (didMountRef.current) {
+            startTransition(() => { setPage(1); });
+        } else {
+            didMountRef.current = true;
+        }
+    }, [debouncedSearchText, sortBy, ageFilter, extra, setPage]);
+
+    const goToPage = (p: number) => {
+        const next = Math.min(Math.max(1, p), totalPages);
+        startTransition(() => { setPage(next); });
+        topRef.current?.scrollIntoView({ block: 'start' });
+    };
 
     const handleAgeFilterChange = (value: number | null) => {
         startTransition(() => {
@@ -355,268 +396,254 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         });
     };
 
+    const currentFilters: FilterState = {
+        companies: extra.companies,
+        locations: extra.locations,
+        geoFilter: { type: 'none' },
+        searchText: localSearchText,
+        postedWithin: ageFilter ?? null,
+        remoteOnly: extra.remoteOnly,
+        minSalary: extra.minSalary,
+        experience: extra.experience,
+    };
+
+    const extraActiveCount =
+        extra.companies.length +
+        extra.locations.length +
+        (extra.remoteOnly ? 1 : 0) +
+        (extra.minSalary != null ? 1 : 0) +
+        (extra.experience ? 1 : 0);
+
+    const handleApplyFilters = (f: FilterState) => {
+        setExtra({
+            companies: f.companies,
+            locations: f.locations,
+            remoteOnly: f.remoteOnly,
+            minSalary: f.minSalary,
+            experience: f.experience,
+        });
+        if (f.searchText !== localSearchText) setLocalSearchText(f.searchText);
+        if (f.postedWithin !== ageFilter) {
+            startTransition(() => {
+                setAgeFilter(f.postedWithin);
+            });
+        }
+    };
+
     return (
-        <div className="space-y-3">
-            {/* Search and Sort */}
-            <div className="space-y-2">
-                {/* Search */}
-                <div
-                    className={clsx(
-                        'bg-white/8 rounded-xl border border-white/12 overflow-hidden',
-                        'transition-all duration-200',
-                        'focus-within:border-blue-500/50 focus-within:bg-white/10'
-                    )}
-                >
-                    <input
-                        type="text"
-                        placeholder={hasJobs ? 'Search jobs (e.g., engineer not:senior @company:Deepmind)' : 'No roles yet'}
+        <div className="space-y-4">
+            {/* Search + controls */}
+            <div className="space-y-3">
+                <div className="flex items-stretch gap-2">
+                    <SearchField
                         value={localSearchText}
-                        onChange={(e) => setLocalSearchText(e.target.value)}
-                        className={clsx(
-                            'w-full px-4 py-2.5',
-                            'bg-transparent border-none text-white text-[13px] outline-none',
-                            'placeholder:text-white/40'
-                        )}
+                        onChange={setLocalSearchText}
+                        placeholder={hasJobs ? 'Search jobs (e.g. @company:Deepmind @location:SF engineer)' : 'No roles yet'}
                         disabled={!hasJobs}
+                        className="flex-1"
                     />
+                    <button
+                        type="button"
+                        onClick={() => setFilterOpen(true)}
+                        disabled={!hasJobs}
+                        className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-[var(--radius-pill)] border-2 border-dotted border-[var(--line-strong)] bg-[var(--paper-3)] px-4 text-sm font-medium text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+                            <line x1="4" y1="6" x2="20" y2="6" />
+                            <line x1="7" y1="12" x2="17" y2="12" />
+                            <line x1="10" y1="18" x2="14" y2="18" />
+                        </svg>
+                        Filter
+                        {extraActiveCount > 0 && (
+                            <span className="rounded-[var(--radius-pill)] bg-[var(--violet-tint)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--violet-deep)]">
+                                {extraActiveCount}
+                            </span>
+                        )}
+                    </button>
                 </div>
 
-                {/* Filter and Sort */}
-                <div className="space-y-2">
-                    {/* Filter */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-white/50">Posted:</span>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {[
-                                { value: null, label: 'Any time' },
-                                { value: 1, label: '24h' },
-                                { value: 7, label: '7 days' },
-                                { value: 30, label: '30 days' },
-                            ].map((option) => (
-                                <button
-                                    key={option.label}
-                                    onClick={() => handleAgeFilterChange(option.value)}
-                                    className={clsx(
-                                        'px-[10px] py-1 rounded-full text-[11px] font-medium',
-                                        'transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer',
-                                        ageFilter === option.value
-                                            ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
-                                            : 'bg-white/8 border border-white/12 text-white/70 hover:bg-white/12 hover:border-white/20',
-                                        isPending && 'opacity-70'
-                                    )}
-                                    disabled={!hasJobs || isPending}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    {/* Posted */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[12px] text-[var(--ink-mute)]">Posted</span>
+                        {[
+                            { value: null, label: 'Any time' },
+                            { value: 1, label: '24h' },
+                            { value: 7, label: '7 days' },
+                            { value: 30, label: '30 days' },
+                        ].map((option) => (
+                            <button
+                                key={option.label}
+                                onClick={() => handleAgeFilterChange(option.value)}
+                                className={pill(ageFilter === option.value)}
+                                disabled={!hasJobs || isPending}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
                     </div>
                     {/* Sort */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-white/50">Sort:</span>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {[
-                                { value: 'title', label: 'Title' },
-                                { value: 'company', label: 'Company' },
-                                { value: 'location', label: 'Location' },
-                                { value: 'recent', label: 'Recent' },
-                                { value: 'experience', label: 'Experience' },
-                                { value: 'salary', label: 'Salary' },
-                            ].map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleSortChange(option.value as SortOption)}
-                                    className={clsx(
-                                        'px-[10px] py-1 rounded-full text-[11px] font-medium',
-                                        'transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer',
-                                        sortBy === option.value
-                                            ? 'bg-white/12 border border-white/20 text-white'
-                                            : 'bg-white/8 border border-white/12 text-white/70 hover:bg-white/12 hover:border-white/20',
-                                        isPending && 'opacity-70'
-                                    )}
-                                    disabled={!hasJobs || isPending}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[12px] text-[var(--ink-mute)]">Sort</span>
+                        {[
+                            { value: 'recent', label: 'Recent' },
+                            { value: 'salary', label: 'Salary' },
+                            { value: 'experience', label: 'Experience' },
+                            { value: 'company', label: 'Company' },
+                            { value: 'title', label: 'Title' },
+                            { value: 'location', label: 'Location' },
+                        ].map((option) => (
+                            <button
+                                key={option.value}
+                                onClick={() => handleSortChange(option.value as SortOption)}
+                                className={pill(sortBy === option.value)}
+                                disabled={!hasJobs || isPending}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Results count - Always display to avoid layout shifts */}
-            {hasJobs && (
-                <div className="text-[13px] text-white/60">
-                    <span>
-                        {processedJobs.length.toLocaleString()} job{processedJobs.length === 1 ? '' : 's'} found
-                    </span>
-                </div>
-            )}
-
-            {/* Job List */}
-            <div
-                ref={parentRef}
-                className="h-[600px] overflow-y-auto relative"
-            >
+            {/* Job list — single column, paginated (no nested scroll) */}
+            <div ref={topRef} className="scroll-mt-4 overflow-hidden rounded-xl">
                 {isPending ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center py-12 px-6 text-center">
-                        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
-                        <p className="text-[14px] text-white/70 font-medium m-0">Loading jobs...</p>
+                    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                        <div className="mb-4 size-7 animate-spin rounded-full border-2 border-[var(--line-strong)] border-t-[var(--violet)]" />
+                        <p className="m-0 text-[14px] font-medium text-[var(--ink-soft)]">Loading jobs…</p>
                     </div>
                 ) : processedJobs.length === 0 ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center py-12 px-6 text-center">
-                        <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-                            <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-white/40"
-                            >
+                    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                        <div className="mb-4 grid size-12 place-items-center rounded-full border border-[var(--line)] bg-[var(--paper-3)]">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--ink-mute)]">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
                         </div>
-                        <p className="text-[14px] text-white/70 font-medium m-0 mb-1">No jobs found</p>
-                        <p className="text-[12px] text-white/50 m-0">Try adjusting your search or filters</p>
+                        <p className="m-0 mb-1 text-[14px] font-medium text-[var(--ink-soft)]">No jobs found</p>
+                        <p className="m-0 text-[12px] text-[var(--ink-mute)]">Try adjusting your search or filters</p>
                     </div>
                 ) : (
-                    <div
-                        style={{
-                            height: `${virtualizer.getTotalSize()}px`,
-                            position: 'relative',
-                            width: '100%',
-                        }}
-                    >
-                        {virtualizer.getVirtualItems().map((virtualItem) => {
-                            const job = processedJobs[virtualItem.index];
-                            if (!job) return null;
+                    pageJobs.map((job, i) => {
+                        const slug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
+                        const uniqueKey = `${job.ats_id || job.id || 'unknown'}-${(currentPage - 1) * PAGE_SIZE + i}`;
+                        const formattedDate = formatJobDate(job);
+                        const salary = formatSalary(job);
+                        const experience = formatExperience(job.experience);
 
-                            const slug = generateJobSlug(job.title, job.id, job.company, job.ats_id, job.url);
-                            // Always include index to ensure uniqueness, even if ats_id is duplicated
-                            const uniqueKey = `${job.ats_id || job.id || 'unknown'}-${virtualItem.index}`;
-                            const formattedDate = formattedDateCache.get(job.ats_id || job.id);
-
-                            return (
-                                <div
-                                    key={uniqueKey}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: `${virtualItem.size}px`,
-                                        transform: `translateY(${virtualItem.start}px)`,
-                                    }}
-                                    className="pr-4 pt-2.5 pb-2.5 border-b border-white/5"
-                                >
-                                    {/* Title and Age Badge */}
-                                    <div className="flex items-start justify-between gap-2 mb-1">
-                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            <Link
-                                                href={`/jobs/${slug}`}
-                                                prefetch={false}
-                                                className="text-[14px] md:text-[16px] font-medium text-white leading-normal m-0 no-underline hover:text-blue-400 transition-colors block"
-                                            >
-                                                {job.title}
-                                            </Link>
-                                            {formatExperience(job.experience) && (
-                                                <span className="text-[12px] md:text-[13px] text-white/50 shrink-0">
-                                                    {formatExperience(job.experience)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            {formattedDate && (
-                                                <span
-                                                    className={clsx(
-                                                        'text-[10px] md:text-[11px] font-medium rounded-full px-[6px] py-0.5 border',
-                                                        formattedDate === 'New'
-                                                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                                            : 'bg-white/8 text-white/70 border-white/12'
-                                                    )}
-                                                >
-                                                    {formattedDate}
-                                                </span>
-                                            )}
-                                            <SaveJobButton atsId={job.ats_id} name={job.title} company={job.company} variant="icon" />
-                                            <AppliedJobButton atsId={job.ats_id} name={job.title} company={job.company} variant="icon" />
-                                        </div>
+                        return (
+                            <div
+                                key={uniqueKey}
+                                className="group flex items-center justify-between gap-3 border-b border-dotted border-[var(--line-strong)] px-3.5 py-2.5 transition-colors last:border-b-0 hover:bg-[color-mix(in_oklab,var(--fg)_4%,transparent)]"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <Link
+                                            href={`/jobs/${slug}`}
+                                            prefetch
+                                            className="truncate text-[15px] font-medium leading-tight text-[var(--ink)] no-underline transition-colors group-hover:text-[var(--violet-deep)]"
+                                        >
+                                            {job.title}
+                                        </Link>
+                                        {experience && <span className="shrink-0 text-[11px] text-[var(--ink-mute)]">{experience}</span>}
                                     </div>
-
-                                    {/* Company */}
-                                    {!hideCompanyName && (
-                                        <div className="text-[13px] md:text-[15px] text-white/70 mb-1.5">
-                                            <Link
-                                                href={`/jobs/${generateCompanySlug(job.company)}`}
-                                                className="no-underline hover:text-white transition-colors uppercase"
-                                            >
-                                                {job.company}
-                                            </Link>
-                                        </div>
-                                    )}
-
-                                    {/* Location and Salary */}
-                                    <div className="flex items-center gap-2 text-[13px] md:text-[15px] text-white/60 mb-2 flex-wrap">
-                                        <div className="flex items-center gap-1">
-                                            <svg
-                                                width="12"
-                                                height="12"
-                                                className="md:w-[14px] md:h-[14px]"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            >
+                                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12.5px] text-[var(--ink-mute)]">
+                                        {!hideCompanyName && (
+                                            <>
+                                                <Link
+                                                    href={`/jobs/${generateCompanySlug(job.company)}`}
+                                                    className="shrink-0 font-medium uppercase tracking-wide no-underline transition-colors hover:text-[var(--violet-deep)]"
+                                                >
+                                                    {job.company}
+                                                </Link>
+                                                <span className="opacity-40">·</span>
+                                            </>
+                                        )}
+                                        <span className="flex min-w-0 items-center gap-1 text-[var(--ink-soft)]">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                                                 <circle cx="12" cy="10" r="3" />
                                             </svg>
-                                            {job.location}
-                                        </div>
-                                        {formatSalary(job) && (
-                                            <span className="text-green-400/80 font-medium">
-                                                {formatSalary(job)}
-                                            </span>
-                                        )}
+                                            <span className="truncate">{job.location}</span>
+                                        </span>
                                     </div>
+                                </div>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-2">
-                                        <Link
+                                <div className="flex shrink-0 items-center gap-2">
+                                    {salary && <span className="hidden text-[12.5px] font-medium text-[var(--emerald)] sm:inline">{salary}</span>}
+                                    {formattedDate && (
+                                        <span
+                                            className={clsx(
+                                                'rounded-[var(--radius-pill)] px-[6px] py-0.5 text-[10px] font-medium',
+                                                formattedDate === 'New' ? 'bg-[var(--brand-tint)] text-[var(--brand-deep)]' : 'bg-[var(--paper-3)] text-[var(--ink-soft)]',
+                                            )}
+                                        >
+                                            {formattedDate}
+                                        </span>
+                                    )}
+                                    <div className="flex items-center gap-0.5 opacity-80 transition-opacity group-hover:opacity-100">
+                                        <a
                                             href={addUtmParams(job.url)}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 px-[10px] py-0.5 bg-white/8 text-white no-underline rounded-full text-[11px] md:text-[12px] font-medium border border-white/12 transition-[border-color,background-color] duration-200 ease-in-out hover:bg-white/12 hover:border-white/20"
+                                            aria-label="Open job posting"
+                                            className="grid size-6 place-items-center rounded-md text-[var(--ink-mute)] transition-colors hover:bg-[var(--paper-3)] hover:text-[var(--ink)]"
                                         >
-                                            View Job
-                                            <svg
-                                                width="10"
-                                                height="10"
-                                                className="md:w-[11px] md:h-[11px]"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            >
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
                                             </svg>
-                                        </Link>
+                                        </a>
+                                        <SaveJobButton atsId={job.ats_id} name={job.title} company={job.company} variant="icon" />
+                                        <AppliedJobButton atsId={job.ats_id} name={job.title} company={job.company} variant="icon" />
                                     </div>
-
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        );
+                    })
                 )}
             </div>
+
+            {/* Pagination */}
+            {!isPending && totalPages > 1 && (
+                <nav className="flex flex-wrap items-center justify-center gap-1.5 pt-1" aria-label="Pagination">
+                    <button
+                        type="button"
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md pl-1.5 pr-2.5 text-[13px] font-medium text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-3)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Prev
+                    </button>
+                    {buildPageList(currentPage, totalPages).map((p, idx) =>
+                        p === '…' ? (
+                            <span key={`ellipsis-${idx}`} className="px-1 text-[13px] text-[var(--ink-faint)]">…</span>
+                        ) : (
+                            <button key={p} type="button" onClick={() => goToPage(p)} className={pageBtn(p === currentPage)} aria-current={p === currentPage ? 'page' : undefined}>
+                                {p}
+                            </button>
+                        ),
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md pl-2.5 pr-1.5 text-[13px] font-medium text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-3)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Next
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                    </button>
+                </nav>
+            )}
+
+            <FilterDialog
+                isOpen={filterOpen}
+                onClose={() => setFilterOpen(false)}
+                jobs={jobs}
+                current={currentFilters}
+                onApplyFilters={handleApplyFilters}
+            />
         </div>
     );
 }

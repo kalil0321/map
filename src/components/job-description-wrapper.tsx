@@ -6,10 +6,10 @@ const JobDescription = dynamic(() => import('./job-description').then(mod => mod
     ssr: false,
     loading: () => (
         <div className="space-y-4 animate-pulse">
-            <div className="h-6 bg-white/5 rounded w-3/4"></div>
-            <div className="h-4 bg-white/5 rounded w-full"></div>
-            <div className="h-4 bg-white/5 rounded w-5/6"></div>
-            <div className="h-4 bg-white/5 rounded w-4/5"></div>
+            <div className="h-6 bg-[color-mix(in_oklab,var(--fg)_6%,transparent)] rounded w-3/4"></div>
+            <div className="h-4 bg-[color-mix(in_oklab,var(--fg)_6%,transparent)] rounded w-full"></div>
+            <div className="h-4 bg-[color-mix(in_oklab,var(--fg)_6%,transparent)] rounded w-5/6"></div>
+            <div className="h-4 bg-[color-mix(in_oklab,var(--fg)_6%,transparent)] rounded w-4/5"></div>
         </div>
     ),
 });

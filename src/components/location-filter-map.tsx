@@ -204,8 +204,8 @@ function ContinentMarker({
           className={clsx(
             'px-2 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all',
             'shadow-lg backdrop-blur-sm whitespace-nowrap',
-            isSelected 
-              ? 'bg-blue-500 text-white border border-blue-400 scale-110' 
+            isSelected
+              ? 'bg-[var(--brand)] text-white border border-[var(--brand-deep)] scale-110'
               : 'bg-black/70 text-white/80 border border-white/20 hover:bg-black/90 hover:scale-105'
           )}
         >
@@ -240,8 +240,8 @@ function CountryMarker({
           className={clsx(
             'w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all',
             'text-[8px] font-bold shadow-md',
-            isSelected 
-              ? 'bg-blue-500 text-white border-2 border-blue-300 scale-125' 
+            isSelected
+              ? 'bg-[var(--brand)] text-white border-2 border-[var(--brand-deep)] scale-125'
               : 'bg-black/60 text-white/70 border border-white/30 hover:bg-black/80 hover:scale-110'
           )}
           title={country.name}
@@ -357,27 +357,26 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
   return (
     <div className="space-y-3">
       {/* Mode Tabs */}
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         {(['continent', 'country', 'radius'] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={clsx(
-              'px-[10px] py-1 rounded-full text-[11px] font-medium',
-              'transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer',
+              'inline-flex cursor-pointer items-center rounded-[var(--radius-pill)] px-3 py-1 text-[12px] font-medium transition-colors',
               mode === m
-                ? 'bg-blue-500/20 border border-blue-500/50 text-blue-400'
-                : 'bg-white/8 border border-white/12 text-white/70 hover:bg-white/12 hover:border-white/20'
+                ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
+                : 'bg-[var(--paper-3)] text-[var(--ink-soft)] hover:text-[var(--ink)]'
             )}
           >
             {m === 'continent' ? 'Continents' : m === 'country' ? 'Countries' : 'Radius'}
           </button>
         ))}
-        
+
         {selectionSummary && (
           <button
             onClick={handleClearAll}
-            className="ml-auto px-[10px] py-1 rounded-full text-[11px] font-medium bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-[border-color,background-color] duration-200 ease-in-out cursor-pointer"
+            className="ml-auto text-[11px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)] cursor-pointer"
           >
             Clear
           </button>
@@ -385,7 +384,7 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
       </div>
 
       {/* Interactive Map */}
-      <div className="h-[300px] rounded-xl overflow-hidden border border-white/12">
+      <div className="h-[300px] rounded-xl overflow-hidden border border-[var(--line)]">
         <Map 
           center={mapSettings.center} 
           zoom={mapSettings.zoom}
@@ -424,7 +423,7 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
               <RadiusCircle center={clickedPoint} radiusKm={radiusKm} />
               <MapMarker longitude={clickedPoint.lng} latitude={clickedPoint.lat}>
                 <MarkerContent>
-                  <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
+                  <div className="w-4 h-4 bg-[var(--brand)] rounded-full border-2 border-white shadow-lg" />
                 </MarkerContent>
               </MapMarker>
             </>
@@ -433,7 +432,7 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
       </div>
 
       {/* Helper text */}
-      <div className="text-[10px] text-white/40">
+      <div className="text-[10px] text-[var(--ink-mute)]">
         {mode === 'continent' && 'Click on continent labels to select'}
         {mode === 'country' && 'Click on country markers to select'}
         {mode === 'radius' && (clickedPoint ? 'Adjust radius with the slider below' : 'Click anywhere on the map to set center')}
@@ -443,8 +442,8 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
       {mode === 'radius' && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-[11px] text-white/50">Radius</label>
-            <span className="text-[11px] text-white/70 font-medium">{radiusKm} km</span>
+            <label className="text-[11px] text-[var(--ink-mute)]">Radius</label>
+            <span className="text-[11px] text-[var(--ink-soft)] font-medium">{radiusKm} km</span>
           </div>
           <input
             type="range"
@@ -454,15 +453,16 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
             value={radiusKm}
             onChange={(e) => setRadiusKm(Number(e.target.value))}
             disabled={!clickedPoint}
+            style={{ accentColor: 'var(--brand)' }}
             className={clsx(
-              'w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/20',
+              'w-full h-1.5 rounded-full appearance-none cursor-pointer bg-[var(--paper-3)]',
               '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4',
-              '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500',
+              '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--brand)]',
               '[&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md',
               !clickedPoint && 'opacity-50 cursor-not-allowed'
             )}
           />
-          <div className="flex justify-between text-[10px] text-white/40">
+          <div className="flex justify-between text-[10px] text-[var(--ink-mute)]">
             <span>10 km</span>
             <span>500 km</span>
           </div>
@@ -471,8 +471,8 @@ export function LocationFilterMap({ onFilterChange, currentFilter }: LocationFil
 
       {/* Selection Summary */}
       {selectionSummary && (
-        <div className="text-[11px] text-white/50 pt-2 border-t border-white/8">
-          Filtering by: <span className="text-blue-400 font-medium">{selectionSummary}</span>
+        <div className="text-[11px] text-[var(--ink-mute)] pt-2 border-t border-dotted border-[var(--line)]">
+          Filtering by: <span className="text-[var(--violet-deep)] font-medium">{selectionSummary}</span>
         </div>
       )}
     </div>
