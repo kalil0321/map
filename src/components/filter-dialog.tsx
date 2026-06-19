@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import clsx from 'clsx';
 import type { JobMarker } from '@/types';
 import { SearchField } from './search-field';
@@ -8,6 +8,7 @@ import { LocationFilterMap } from './location-filter-map';
 import {
   type FilterState,
   type ExperienceLevel,
+  type GeoFilter,
   EMPTY_FILTERS,
   countMatches,
   countActiveFilters,
@@ -107,14 +108,28 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, current }:
   const matchCount = useMemo(() => countMatches(jobs, filters), [jobs, filters]);
   const activeCount = countActiveFilters(filters);
 
-  const toggleInArray = (key: 'companies' | 'locations', value: string) => {
+  // Companies cycle through three states: off → include → exclude → off.
+  const cycleCompany = (value: string) => {
     setFilters((f) => {
-      const set = new Set(f[key]);
-      if (set.has(value)) set.delete(value);
-      else set.add(value);
-      return { ...f, [key]: Array.from(set) };
+      const inc = new Set(f.companies);
+      const exc = new Set(f.excludeCompanies);
+      if (inc.has(value)) {
+        inc.delete(value);
+        exc.add(value);
+      } else if (exc.has(value)) {
+        exc.delete(value);
+      } else {
+        inc.add(value);
+      }
+      return { ...f, companies: Array.from(inc), excludeCompanies: Array.from(exc) };
     });
   };
+
+  // Stable identity — LocationFilterMap keeps this in a useEffect dep array,
+  // so an inline arrow here would cause an infinite update loop.
+  const handleGeoFilterChange = useCallback((geoFilter: GeoFilter) => {
+    setFilters((f) => ({ ...f, geoFilter }));
+  }, []);
 
   const handleApply = () => {
     onApplyFilters(filters);
@@ -248,20 +263,21 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, current }:
             <label className={labelCls}>Location</label>
             <LocationFilterMap
               currentFilter={filters.geoFilter}
-              onFilterChange={(geoFilter) => setFilters((f) => ({ ...f, geoFilter }))}
+              onFilterChange={handleGeoFilterChange}
             />
           </div>
 
-          {/* Companies */}
+          {/* Companies — click once to include, again to exclude, again to clear */}
           <SelectList
             title="Companies"
             placeholder="Search companies…"
             items={filteredCompanies}
-            selected={filters.companies}
+            included={filters.companies}
+            excluded={filters.excludeCompanies}
             searchText={companySearchText}
             onSearchChange={setCompanySearchText}
-            onToggle={(v) => toggleInArray('companies', v)}
-            onClear={() => setFilters((f) => ({ ...f, companies: [] }))}
+            onCycle={cycleCompany}
+            onClear={() => setFilters((f) => ({ ...f, companies: [], excludeCompanies: [] }))}
             uppercase
           />
         </div>
@@ -295,63 +311,87 @@ export function FilterDialog({ isOpen, onClose, jobs, onApplyFilters, current }:
   );
 }
 
+function MinusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="size-3">
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
 function SelectList({
   title,
   placeholder,
   items,
-  selected,
+  included,
+  excluded,
   searchText,
   onSearchChange,
-  onToggle,
+  onCycle,
   onClear,
   uppercase = false,
 }: {
   title: string;
   placeholder: string;
   items: string[];
-  selected: string[];
+  included: string[];
+  excluded: string[];
   searchText: string;
   onSearchChange: (v: string) => void;
-  onToggle: (v: string) => void;
+  onCycle: (v: string) => void;
   onClear: () => void;
   uppercase?: boolean;
 }) {
-  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const includedSet = useMemo(() => new Set(included), [included]);
+  const excludedSet = useMemo(() => new Set(excluded), [excluded]);
+  const total = included.length + excluded.length;
+
+  const chip = (v: string, mode: 'inc' | 'exc') => (
+    <button
+      key={`${mode}-${v}`}
+      onClick={() => onCycle(v)}
+      title={mode === 'inc' ? 'Including — click to exclude' : 'Excluding — click to clear'}
+      className={clsx(
+        'inline-flex items-center gap-1 rounded-[var(--radius-pill)] px-2 py-0.5 text-[11px] font-medium',
+        uppercase && 'uppercase',
+        mode === 'inc'
+          ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
+          : 'bg-[color-mix(in_oklab,#ef4444_18%,transparent)] text-[#fca5a5]',
+      )}
+    >
+      {mode === 'exc' && <span className="font-semibold">−</span>}
+      <span className="max-w-[140px] truncate">{v}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-3 shrink-0">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+  );
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <label className="text-[13px] font-medium text-[var(--ink)]">
           {title}
-          {selected.length > 0 && (
-            <span className="ml-1.5 text-[var(--ink-mute)]">({selected.length})</span>
+          {total > 0 && (
+            <span className="ml-1.5 text-[var(--ink-mute)]">
+              ({included.length > 0 && `${included.length} incl`}
+              {included.length > 0 && excluded.length > 0 && ' · '}
+              {excluded.length > 0 && `${excluded.length} excl`})
+            </span>
           )}
         </label>
-        {selected.length > 0 && (
+        {total > 0 && (
           <button onClick={onClear} className="text-[11px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]">
             Clear
           </button>
         )}
       </div>
 
-      {/* Selected chips */}
-      {selected.length > 0 && (
+      {/* Selected chips — included then excluded */}
+      {total > 0 && (
         <div className="mb-2 flex max-h-[64px] flex-wrap gap-1.5 overflow-y-auto">
-          {selected.map((v) => (
-            <button
-              key={v}
-              onClick={() => onToggle(v)}
-              className={clsx(
-                'inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-[var(--violet-tint)] px-2 py-0.5 text-[11px] font-medium text-[var(--violet-deep)]',
-                uppercase && 'uppercase',
-              )}
-            >
-              <span className="max-w-[140px] truncate">{v}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-3 shrink-0">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
-          ))}
+          {included.map((v) => chip(v, 'inc'))}
+          {excluded.map((v) => chip(v, 'exc'))}
         </div>
       )}
 
@@ -362,28 +402,35 @@ function SelectList({
           <div className="p-4 text-center text-[13px] text-[var(--ink-mute)]">No matches</div>
         ) : (
           items.map((item) => {
-            const isSelected = selectedSet.has(item);
+            const isIncluded = includedSet.has(item);
+            const isExcluded = excludedSet.has(item);
             return (
               <button
                 key={item}
-                onClick={() => onToggle(item)}
+                onClick={() => onCycle(item)}
+                title={isIncluded ? 'Click to exclude' : isExcluded ? 'Click to clear' : 'Click to include'}
                 className={clsx(
                   'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors',
                   uppercase && 'uppercase',
-                  isSelected
+                  isIncluded
                     ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
-                    : 'text-[var(--ink-soft)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
+                    : isExcluded
+                      ? 'text-[#fca5a5] line-through decoration-[#fca5a5]/40'
+                      : 'text-[var(--ink-soft)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
                 )}
               >
                 <span
                   className={clsx(
                     'grid size-[15px] shrink-0 place-items-center rounded-[4px] border transition-colors',
-                    isSelected
+                    isIncluded
                       ? 'border-[var(--violet-solid)] bg-[var(--violet-solid)] text-white'
-                      : 'border-[var(--line-strong)]',
+                      : isExcluded
+                        ? 'border-[#ef4444] bg-[#ef4444] text-white'
+                        : 'border-[var(--line-strong)]',
                   )}
                 >
-                  {isSelected && <CheckIcon />}
+                  {isIncluded && <CheckIcon />}
+                  {isExcluded && <MinusIcon />}
                 </span>
                 <span className="truncate">{item}</span>
               </button>

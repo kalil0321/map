@@ -196,11 +196,12 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
     const [filterOpen, setFilterOpen] = useState(false);
     const [extra, setExtra] = useState<{
         companies: string[];
+        excludeCompanies: string[];
         locations: string[];
         remoteOnly: boolean;
         minSalary: number | null;
         experience: ExperienceLevel | null;
-    }>({ companies: [], locations: [], remoteOnly: false, minSalary: null, experience: null });
+    }>({ companies: [], excludeCompanies: [], locations: [], remoteOnly: false, minSalary: null, experience: null });
     const hasJobs = jobs.length > 0;
     const isInternalUpdateRef = useRef(false);
 
@@ -306,6 +307,9 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         if (extra.companies.length > 0) {
             filtered = filtered.filter(job => extra.companies.includes(job.company));
         }
+        if (extra.excludeCompanies.length > 0) {
+            filtered = filtered.filter(job => !extra.excludeCompanies.includes(job.company));
+        }
         if (extra.locations.length > 0) {
             filtered = filtered.filter(job => extra.locations.includes(job.location));
         }
@@ -398,6 +402,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
 
     const currentFilters: FilterState = {
         companies: extra.companies,
+        excludeCompanies: extra.excludeCompanies,
         locations: extra.locations,
         geoFilter: { type: 'none' },
         searchText: localSearchText,
@@ -409,6 +414,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
 
     const extraActiveCount =
         extra.companies.length +
+        extra.excludeCompanies.length +
         extra.locations.length +
         (extra.remoteOnly ? 1 : 0) +
         (extra.minSalary != null ? 1 : 0) +
@@ -417,6 +423,7 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
     const handleApplyFilters = (f: FilterState) => {
         setExtra({
             companies: f.companies,
+            excludeCompanies: f.excludeCompanies,
             locations: f.locations,
             remoteOnly: f.remoteOnly,
             minSalary: f.minSalary,

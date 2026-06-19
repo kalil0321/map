@@ -9,6 +9,8 @@ export type ExperienceLevel = 'entry' | 'mid' | 'senior';
 
 export interface FilterState {
   companies: string[];
+  /** Companies to exclude from results (takes precedence over `companies`). */
+  excludeCompanies: string[];
   locations: string[];
   /** Map-based geographic filter (continent / country / radius). */
   geoFilter: GeoFilter;
@@ -21,6 +23,7 @@ export interface FilterState {
 
 export const EMPTY_FILTERS: FilterState = {
   companies: [],
+  excludeCompanies: [],
   locations: [],
   geoFilter: getDefaultGeoFilter(),
   searchText: '',
@@ -98,6 +101,7 @@ export function getSalaryValue(salarySummary: string | null | undefined): number
 // Used by the dialog (live count), the page (map markers), and elsewhere.
 export function matchesFilters(job: JobMarker, f: FilterState): boolean {
   if (f.companies.length > 0 && !f.companies.includes(job.company)) return false;
+  if (f.excludeCompanies?.length > 0 && f.excludeCompanies.includes(job.company)) return false;
   if (f.locations.length > 0 && !f.locations.includes(job.location)) return false;
   if (f.geoFilter && f.geoFilter.type !== 'none' && !isJobInGeoFilter(job.lat, job.lng, f.geoFilter)) return false;
 
@@ -133,6 +137,7 @@ export function countMatches(jobs: JobMarker[], f: FilterState): number {
 export function countActiveFilters(f: FilterState): number {
   return (
     f.companies.length +
+    (f.excludeCompanies?.length || 0) +
     f.locations.length +
     (f.geoFilter && f.geoFilter.type !== 'none' ? 1 : 0) +
     (f.searchText.trim() ? 1 : 0) +

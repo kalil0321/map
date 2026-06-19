@@ -37,6 +37,7 @@ function HomeContent() {
   // Track applied filters (search + age come from the URL)
   const [appliedFilters, setAppliedFilters] = useState<{
     companies: string[];
+    excludeCompanies: string[];
     locations: string[];
     geoFilter: GeoFilter;
     remoteOnly: boolean;
@@ -44,6 +45,7 @@ function HomeContent() {
     experience: ExperienceLevel | null;
   }>({
     companies: [],
+    excludeCompanies: [],
     locations: [],
     geoFilter: getDefaultGeoFilter(),
     remoteOnly: false,
@@ -53,6 +55,7 @@ function HomeContent() {
 
   const hasActiveFilters =
     appliedFilters.companies.length > 0 ||
+    appliedFilters.excludeCompanies.length > 0 ||
     appliedFilters.locations.length > 0 ||
     appliedFilters.geoFilter.type !== 'none' ||
     appliedFilters.remoteOnly ||
@@ -64,6 +67,7 @@ function HomeContent() {
   // Build the FilterState the dialog syncs to when it opens.
   const currentFilters: FilterState = {
     companies: appliedFilters.companies,
+    excludeCompanies: appliedFilters.excludeCompanies,
     locations: appliedFilters.locations,
     geoFilter: appliedFilters.geoFilter,
     searchText: urlSearchText || '',
@@ -85,6 +89,7 @@ function HomeContent() {
   const handleApplyFilters = useCallback((filters: FilterState) => {
     setAppliedFilters({
       companies: filters.companies,
+      excludeCompanies: filters.excludeCompanies,
       locations: filters.locations,
       geoFilter: filters.geoFilter,
       remoteOnly: filters.remoteOnly,
@@ -110,6 +115,7 @@ function HomeContent() {
     if (jobMarkers.length > 0 && urlSearchText !== undefined && ageFilter !== undefined) {
       applyFilters({
         companies: appliedFilters.companies,
+        excludeCompanies: appliedFilters.excludeCompanies,
         locations: appliedFilters.locations,
         geoFilter: appliedFilters.geoFilter,
         searchText: urlSearchText || '',
