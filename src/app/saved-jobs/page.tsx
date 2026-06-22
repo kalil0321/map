@@ -1,17 +1,13 @@
 import { Metadata } from 'next';
 import { PageHeader } from '@/components/page-header';
 import { Footer } from '@/components/footer';
-import { SavedJobsList } from '@/components/saved-jobs-list';
-import { loadJobsWithCoordinatesServer } from '@/utils/data-processor-server';
+import { SavedJobsListClient } from '@/components/client-job-lists';
 
 export const metadata: Metadata = {
   title: 'Saved Jobs | Stapply',
 };
 
-export default async function SavedJobsPage() {
-  // Load all jobs for filtering
-  const jobs = await loadJobsWithCoordinatesServer('/ai.csv');
-
+export default function SavedJobsPage() {
   return (
     <div className="flex h-screen flex-col overflow-y-auto bg-[var(--bg)] text-[var(--ink)]">
       <PageHeader />
@@ -21,7 +17,7 @@ export default async function SavedJobsPage() {
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Saved jobs</h1>
         </div>
 
-        <SavedJobsList jobs={jobs} />
+        <SavedJobsListClient />
       </main>
 
       <Footer />
