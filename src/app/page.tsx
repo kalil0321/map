@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
-import { useQueryState, parseAsInteger } from 'nuqs';
+import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from 'react';
+import { useQueryState, parseAsInteger, parseAsString, parseAsBoolean, parseAsArrayOf, parseAsJson } from 'nuqs';
 import { JobMap } from '@/components/job-map';
 import { LoadingScreen } from '@/components/loading-screen';
 import { PageHeader } from '@/components/page-header';
@@ -20,112 +20,75 @@ function HomeContent() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalJobsCount, setTotalJobsCount] = useState(0);
-  const [filteredJobs, setFilteredJobs] = useState<JobMarker[] | null>(null);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isJobListOpen, setIsJobListOpen] = useState(false);
   const mapControlCallbacksRef = useRef<MapControlCallbacks | null>(null);
 
-  // URL query state for search
+  // Every filter lives in the URL — so filters persist across navigation / reload
+  // and are shareable. (search + age were already here.)
   const [urlSearchText, setUrlSearchText] = useQueryState('search', {
     defaultValue: '',
     clearOnDefault: true,
   });
-
-  // URL query state for age filter
   const [ageFilter, setAgeFilter] = useQueryState('age', parseAsInteger);
-
-  // Track applied filters (search + age come from the URL)
-  const [appliedFilters, setAppliedFilters] = useState<{
-    companies: string[];
-    excludeCompanies: string[];
-    locations: string[];
-    geoFilter: GeoFilter;
-    remoteOnly: boolean;
-    minSalary: number | null;
-    experience: ExperienceLevel | null;
-  }>({
-    companies: [],
-    excludeCompanies: [],
-    locations: [],
-    geoFilter: getDefaultGeoFilter(),
-    remoteOnly: false,
-    minSalary: null,
-    experience: null,
-  });
-
-  const hasActiveFilters =
-    appliedFilters.companies.length > 0 ||
-    appliedFilters.excludeCompanies.length > 0 ||
-    appliedFilters.locations.length > 0 ||
-    appliedFilters.geoFilter.type !== 'none' ||
-    appliedFilters.remoteOnly ||
-    appliedFilters.minSalary != null ||
-    appliedFilters.experience != null ||
-    !!urlSearchText ||
-    ageFilter != null;
+  const [companies, setCompanies] = useQueryState('companies', parseAsArrayOf(parseAsString).withDefault([]));
+  const [excludeCompanies, setExcludeCompanies] = useQueryState('exclude', parseAsArrayOf(parseAsString).withDefault([]));
+  const [remoteOnly, setRemoteOnly] = useQueryState('remote', parseAsBoolean.withDefault(false));
+  const [minSalary, setMinSalary] = useQueryState('minSalary', parseAsInteger);
+  const [experience, setExperience] = useQueryState('exp', parseAsString);
+  const [geoFilter, setGeoFilter] = useQueryState<GeoFilter>(
+    'geo',
+    parseAsJson<GeoFilter>((v) =>
+      v && typeof v === 'object' && 'type' in (v as object) ? (v as GeoFilter) : getDefaultGeoFilter(),
+    ).withDefault(getDefaultGeoFilter()),
+  );
 
   // Build the FilterState the dialog syncs to when it opens.
   const currentFilters: FilterState = {
-    companies: appliedFilters.companies,
-    excludeCompanies: appliedFilters.excludeCompanies,
-    locations: appliedFilters.locations,
-    geoFilter: appliedFilters.geoFilter,
+    companies,
+    excludeCompanies,
+    locations: [],
+    geoFilter,
     searchText: urlSearchText || '',
     postedWithin: ageFilter ?? null,
-    remoteOnly: appliedFilters.remoteOnly,
-    minSalary: appliedFilters.minSalary,
-    experience: appliedFilters.experience,
+    remoteOnly,
+    minSalary,
+    experience: (experience as ExperienceLevel | null) ?? null,
   };
+
+  const hasActiveFilters =
+    companies.length > 0 ||
+    excludeCompanies.length > 0 ||
+    geoFilter.type !== 'none' ||
+    remoteOnly ||
+    minSalary != null ||
+    experience != null ||
+    !!urlSearchText ||
+    ageFilter != null;
 
   const handleMapControlReady = useCallback((callbacks: MapControlCallbacks) => {
     mapControlCallbacksRef.current = callbacks;
   }, []);
 
-  const applyFilters = useCallback((filters: FilterState) => {
-    const filtered = jobMarkers.filter((job) => matchesFilters(job, filters));
-    setFilteredJobs(filtered.length < jobMarkers.length ? filtered : null);
-  }, [jobMarkers]);
+  // Derived from the dataset + URL filters — recompute only when those change
+  // (no setState, so no render loop).
+  const filteredJobs = useMemo(() => {
+    if (jobMarkers.length === 0) return null;
+    const filtered = jobMarkers.filter((job) => matchesFilters(job, currentFilters));
+    return filtered.length < jobMarkers.length ? filtered : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobMarkers, companies, excludeCompanies, geoFilter, remoteOnly, minSalary, experience, urlSearchText, ageFilter]);
 
   const handleApplyFilters = useCallback((filters: FilterState) => {
-    setAppliedFilters({
-      companies: filters.companies,
-      excludeCompanies: filters.excludeCompanies,
-      locations: filters.locations,
-      geoFilter: filters.geoFilter,
-      remoteOnly: filters.remoteOnly,
-      minSalary: filters.minSalary,
-      experience: filters.experience,
-    });
-
-    // Sync search text to URL if different
-    if (filters.searchText !== urlSearchText) {
-      setUrlSearchText(filters.searchText || null);
-    }
-
-    // Sync age filter to URL if different
-    if (filters.postedWithin !== ageFilter) {
-      setAgeFilter(filters.postedWithin);
-    }
-
-    // Apply filters after syncing to URL
-    applyFilters(filters);
-  }, [applyFilters, urlSearchText, setUrlSearchText, ageFilter, setAgeFilter]);
-
-  useEffect(() => {
-    if (jobMarkers.length > 0 && urlSearchText !== undefined && ageFilter !== undefined) {
-      applyFilters({
-        companies: appliedFilters.companies,
-        excludeCompanies: appliedFilters.excludeCompanies,
-        locations: appliedFilters.locations,
-        geoFilter: appliedFilters.geoFilter,
-        searchText: urlSearchText || '',
-        postedWithin: ageFilter,
-        remoteOnly: appliedFilters.remoteOnly,
-        minSalary: appliedFilters.minSalary,
-        experience: appliedFilters.experience,
-      });
-    }
-  }, [urlSearchText, ageFilter, jobMarkers, applyFilters, appliedFilters]);
+    setCompanies(filters.companies);
+    setExcludeCompanies(filters.excludeCompanies);
+    setRemoteOnly(filters.remoteOnly);
+    setMinSalary(filters.minSalary);
+    setExperience(filters.experience ?? null);
+    setGeoFilter(filters.geoFilter.type === 'none' ? null : filters.geoFilter);
+    setUrlSearchText(filters.searchText || null);
+    setAgeFilter(filters.postedWithin);
+  }, [setCompanies, setExcludeCompanies, setRemoteOnly, setMinSalary, setExperience, setGeoFilter, setUrlSearchText, setAgeFilter]);
 
   const toggleJobList = useCallback(() => {
     setIsJobListOpen((prev) => !prev);

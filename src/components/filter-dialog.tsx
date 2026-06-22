@@ -401,9 +401,16 @@ function SelectList({
         {items.length === 0 ? (
           <div className="p-4 text-center text-[13px] text-[var(--ink-mute)]">No matches</div>
         ) : (
-          items.map((item) => {
+          items.map((item, i) => {
             const isIncluded = includedSet.has(item);
             const isExcluded = excludedSet.has(item);
+            const stateOf = (it: string) =>
+              includedSet.has(it) ? 'inc' : excludedSet.has(it) ? 'exc' : 'none';
+            const st = stateOf(item);
+            // Merge consecutive same-state rows into one smooth block: a selected
+            // run only rounds at its top and bottom.
+            const prevSame = st !== 'none' && i > 0 && stateOf(items[i - 1]) === st;
+            const nextSame = st !== 'none' && i < items.length - 1 && stateOf(items[i + 1]) === st;
             return (
               <button
                 key={item}
@@ -412,10 +419,12 @@ function SelectList({
                 className={clsx(
                   'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors',
                   uppercase && 'uppercase',
+                  prevSame && 'rounded-t-none',
+                  nextSame && 'rounded-b-none',
                   isIncluded
                     ? 'bg-[var(--violet-tint)] text-[var(--violet-deep)]'
                     : isExcluded
-                      ? 'text-[#fca5a5] line-through decoration-[#fca5a5]/40'
+                      ? 'bg-[color-mix(in_oklab,#ef4444_14%,transparent)] text-[#fca5a5] line-through decoration-[#fca5a5]/40'
                       : 'text-[var(--ink-soft)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]',
                 )}
               >

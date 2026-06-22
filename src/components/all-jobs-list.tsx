@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
-import { useQueryState, parseAsInteger } from 'nuqs';
+import { useQueryState, parseAsInteger, parseAsString, parseAsBoolean, parseAsArrayOf } from 'nuqs';
 import clsx from 'clsx';
 import { generateJobSlug, generateCompanySlug } from '@/lib/slug-utils';
 import { formatExperience, formatSalary } from '@/utils/salary-format';
@@ -194,14 +194,32 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
     const [sortBy, setSortBy] = useState<SortOption>('recent');
     const [isPending, startTransition] = useTransition();
     const [filterOpen, setFilterOpen] = useState(false);
-    const [extra, setExtra] = useState<{
-        companies: string[];
-        excludeCompanies: string[];
-        locations: string[];
-        remoteOnly: boolean;
-        minSalary: number | null;
-        experience: ExperienceLevel | null;
-    }>({ companies: [], excludeCompanies: [], locations: [], remoteOnly: false, minSalary: null, experience: null });
+    // Filters live in the URL (same keys as the map page → they persist across
+    // navigation, reload, and are shareable).
+    const [companies, setCompanies] = useQueryState('companies', parseAsArrayOf(parseAsString).withDefault([]));
+    const [excludeCompanies, setExcludeCompanies] = useQueryState('exclude', parseAsArrayOf(parseAsString).withDefault([]));
+    const [remoteOnly, setRemoteOnly] = useQueryState('remote', parseAsBoolean.withDefault(false));
+    const [minSalary, setMinSalary] = useQueryState('minSalary', parseAsInteger);
+    const [experience, setExperience] = useQueryState('exp', parseAsString);
+    const extra = useMemo(() => ({
+        companies,
+        excludeCompanies,
+        locations: [] as string[],
+        remoteOnly,
+        minSalary,
+        experience: (experience as ExperienceLevel | null) ?? null,
+    }), [companies, excludeCompanies, remoteOnly, minSalary, experience]);
+
+    // Cycle a company off → include → exclude → off (used by the per-row toggle).
+    const cycleCompany = (name: string) => {
+        const inc = new Set(companies);
+        const exc = new Set(excludeCompanies);
+        if (inc.has(name)) { inc.delete(name); exc.add(name); }
+        else if (exc.has(name)) { exc.delete(name); }
+        else { inc.add(name); }
+        setCompanies(Array.from(inc));
+        setExcludeCompanies(Array.from(exc));
+    };
     const hasJobs = jobs.length > 0;
     const isInternalUpdateRef = useRef(false);
 
@@ -421,14 +439,11 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
         (extra.experience ? 1 : 0);
 
     const handleApplyFilters = (f: FilterState) => {
-        setExtra({
-            companies: f.companies,
-            excludeCompanies: f.excludeCompanies,
-            locations: f.locations,
-            remoteOnly: f.remoteOnly,
-            minSalary: f.minSalary,
-            experience: f.experience,
-        });
+        setCompanies(f.companies);
+        setExcludeCompanies(f.excludeCompanies);
+        setRemoteOnly(f.remoteOnly);
+        setMinSalary(f.minSalary);
+        setExperience(f.experience ?? null);
         if (f.searchText !== localSearchText) setLocalSearchText(f.searchText);
         if (f.postedWithin !== ageFilter) {
             startTransition(() => {
@@ -538,6 +553,8 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                         const formattedDate = formatJobDate(job);
                         const salary = formatSalary(job);
                         const experience = formatExperience(job.experience);
+                        const compIncluded = companies.includes(job.company);
+                        const compExcluded = excludeCompanies.includes(job.company);
 
                         return (
                             <div
@@ -564,6 +581,22 @@ export function AllJobsList({ jobs, hideCompanyName = false }: AllJobsListProps)
                                                 >
                                                     {job.company}
                                                 </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); cycleCompany(job.company); }}
+                                                    title={compIncluded ? 'Including this company — click to exclude' : compExcluded ? 'Excluding this company — click to clear' : 'Include this company in the filters'}
+                                                    aria-label="Include or exclude this company"
+                                                    className={clsx(
+                                                        'grid size-4 shrink-0 place-items-center rounded-[4px] border text-[11px] font-semibold leading-none transition-colors',
+                                                        compIncluded
+                                                            ? 'border-[var(--violet-solid)] bg-[var(--violet-solid)] text-white'
+                                                            : compExcluded
+                                                                ? 'border-[#ef4444] bg-[#ef4444] text-white'
+                                                                : 'border-[var(--line-strong)] text-[var(--ink-mute)] opacity-0 hover:text-[var(--ink)] group-hover:opacity-100',
+                                                    )}
+                                                >
+                                                    {compIncluded ? '✓' : compExcluded ? '−' : '+'}
+                                                </button>
                                                 <span className="opacity-40">·</span>
                                             </>
                                         )}
