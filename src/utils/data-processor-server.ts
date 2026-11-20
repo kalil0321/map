@@ -1,5 +1,5 @@
-import fs from 'fs';
 import path from 'path';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import Papa from 'papaparse';
 import { cache } from 'react';
 import type { JobMarker } from '@/types';
@@ -7,42 +7,40 @@ import type { JobMarker } from '@/types';
 // In-memory cache for parsed CSV data
 let cachedJobs: JobMarker[] | null = null;
 let cachedFilePath: string | null = null;
-let cachedFileMtime: number = 0;
 let cacheTimestamp: number = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Get file modification time for cache invalidation
-function getFileMtime(filePath: string): number {
+// On Workers, public/ is only reachable through the static assets binding.
+// next build and next dev run in Node, without a Cloudflare context.
+async function readPublicFile(publicPath: string): Promise<string> {
+    let assets: Fetcher | undefined;
     try {
-        return fs.statSync(filePath).mtimeMs;
+        assets = getCloudflareContext().env.ASSETS;
     } catch {
-        return 0;
+        assets = undefined;
     }
+
+    if (assets) {
+        const response = await assets.fetch(new URL(publicPath, 'https://assets.local'));
+        if (!response.ok) {
+            throw new Error(`Could not read ${publicPath}: HTTP ${response.status}`);
+        }
+        return response.text();
+    }
+
+    const { readFile } = await import('fs/promises');
+    return readFile(path.join(process.cwd(), 'public', publicPath), 'utf-8');
 }
 
 export const loadJobsWithCoordinatesServer = cache(async (filePath: string): Promise<JobMarker[]> => {
-    // Remove leading slash if present and resolve path
-    const cleanPath = filePath.replace(/^\//, '');
-    const filePathResolved = path.join(process.cwd(), 'public', cleanPath);
-
-    if (!fs.existsSync(filePathResolved)) {
-        throw new Error(`CSV file not found: ${filePathResolved}`);
-    }
-
-    // Check if we have a valid cache
-    const fileMtime = getFileMtime(filePathResolved);
+    const publicPath = `/${filePath.replace(/^\//, '')}`;
     const now = Date.now();
 
-    if (
-        cachedJobs &&
-        cachedFilePath === filePathResolved &&
-        fileMtime === cachedFileMtime &&
-        (now - cacheTimestamp) < CACHE_TTL
-    ) {
+    if (cachedJobs && cachedFilePath === publicPath && (now - cacheTimestamp) < CACHE_TTL) {
         return cachedJobs;
     }
 
-    const csvText = fs.readFileSync(filePathResolved, 'utf-8');
+    const csvText = await readPublicFile(publicPath);
 
     return new Promise((resolve, reject) => {
         Papa.parse<JobMarker & { lon?: number }>(csvText, {
@@ -99,8 +97,7 @@ export const loadJobsWithCoordinatesServer = cache(async (filePath: string): Pro
 
                 // Update cache
                 cachedJobs = dedupedMarkers;
-                cachedFilePath = filePathResolved;
-                cachedFileMtime = fileMtime;
+                cachedFilePath = publicPath;
                 cacheTimestamp = now;
 
                 resolve(dedupedMarkers);
