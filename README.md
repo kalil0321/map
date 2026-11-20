@@ -58,6 +58,16 @@ npm run dev
 
 The app will be available at `http://localhost:3000`.
 
+## Deploy
+
+The app runs on Cloudflare Workers through the [OpenNext adapter](https://opennext.js.org/cloudflare).
+`npm run preview` builds it and serves it locally on the Workers runtime.
+
+`.github/workflows/deploy.yml` deploys `main` to the `stapply-map` Worker (custom domain
+`map.stapply.ai`) and uploads a preview version for every pull request. It reads the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets and the `NEXT_PUBLIC_MAPBOX_TOKEN`
+variable, which is inlined at build time.
+
 ## Contributing
 
 Contributions! Here's how you can help:

@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stapply-map",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "routes": [{ "pattern": "map.stapply.ai", "custom_domain": true }],
+  "preview_urls": true,
+  "upload_source_maps": true,
+  "observability": {
+    "enabled": true
+  }
+}

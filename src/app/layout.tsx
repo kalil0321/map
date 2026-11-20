@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { fredoka, urbanist } from "./fonts";
 import Script from "next/script";
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import { NuqsProvider } from '@/components/nuqs-provider';
 
 const baseUrl = "https://map.stapply.ai";
@@ -65,8 +63,6 @@ export default function RootLayout({
         )}
       </head>
       <body className="antialiased">
-        <Analytics />
-        <SpeedInsights />
         <NuqsProvider>
           {children}
         </NuqsProvider>

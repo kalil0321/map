@@ -11,7 +11,6 @@ import { loadJobsWithCoordinates, getLocationStats } from '@/utils/data-processo
 import type { JobMarker } from '@/types';
 import { MAPBOX_TOKEN } from '@/lib/config';
 import type { MapControlCallbacks } from '@/utils/map-control';
-import { Analytics } from '@vercel/analytics/react';
 import { matchesFilters, type ExperienceLevel } from '@/utils/job-filters';
 import { getDefaultGeoFilter, type GeoFilter } from '@/utils/geo-filter';
 
@@ -153,7 +152,6 @@ function HomeContent() {
     <div className="flex h-screen flex-col">
       {/* Hidden heading for SEO */}
       <h1 className="sr-only">Stapply Map - Explore Jobs at Tech Companies Worldwide</h1>
-      <Analytics />
 
       <PageHeader
         rightAction={
